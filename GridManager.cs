@@ -13,6 +13,9 @@ public class NewBehaviourScript : MonoBehaviour
 
     [Header("引用")]
     public GameObject gridPrefab;
+    [Header("物种库")]
+    public SpeciesData fastGrowsSpecies;
+    public SpeciesData slowGrowSpecies;
     
     //关键字典，用于以后地块的索引等
     private Dictionary<Vector2Int,GameObject> gridDictionary = new Dictionary<Vector2Int, GameObject>();
@@ -24,7 +27,34 @@ public class NewBehaviourScript : MonoBehaviour
         GenerateGrid();    
     }
 
-//生成地块
+    void Update()
+    {
+        //临时测试种植逻辑，采用鼠标左右键
+        if(Input.GetMouseButtonDown(0))
+        {
+            HandlePlanting(fastGrowsSpecies);
+        }
+        if(Input.GetMouseButtonDown(1))
+        {
+            HandlePlanting(slowGrowSpecies);
+        }
+    }
+    //种植作物(射线检测)
+    void HandlePlanting(SpeciesData species)
+    {
+        //采用射线检测点击的土地块
+        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition),Vector2.zero);
+        if(hit.collider != null)
+        {
+            LandTile tile = hit.collider.GetComponent<LandTile>();
+            if(tile != null && tile.currentState == TileState.Empty)
+            {
+                tile.Plant(species);
+            }
+        }
+    }
+
+    //生成地块
     void GenerateGrid()
     {
         for (int x = 0; x < width; x++)
