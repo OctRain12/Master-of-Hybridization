@@ -10,6 +10,7 @@ public class SpeciesData : ScriptableObject
     [Header("生长阶段计数")]
     public int growingTicks;
     public int flowerTicks;
+    public GenoType defaultGenoType;
 
     //各阶段对应颜色
     public Color growingColor = Color.green;

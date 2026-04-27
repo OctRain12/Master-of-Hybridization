@@ -42,8 +42,19 @@ public class NewBehaviourScript : MonoBehaviour
     //种植作物(射线检测)
     void HandlePlanting(SpeciesData species)
     {
-        //采用射线检测点击的土地块
         RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition),Vector2.zero);
+        if(hit.collider != null)
+        {
+            LandTile tile = hit.collider.GetComponent<LandTile>();
+            if(tile != null && tile.currentState == TileState.Empty)
+            {
+                GenoType mockDna = species.defaultGenoType; //获取Dna模板
+                PlantInstanceData newSeed = new PlantInstanceData(species, mockDna);
+                tile.Plant(newSeed);
+            }
+        }
+        //采用射线检测点击的土地块
+        /*RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition),Vector2.zero);
         if(hit.collider != null)
         {
             LandTile tile = hit.collider.GetComponent<LandTile>();
@@ -52,6 +63,7 @@ public class NewBehaviourScript : MonoBehaviour
                 tile.Plant(species);
             }
         }
+        */
     }
 
     //生成地块
