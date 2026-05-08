@@ -5,8 +5,13 @@ using UnityEngine;
 public enum TileState{Empty,Growing,Flowering,Mature} 
 public class LandTile : MonoBehaviour
 {
+    
+    [HideInInspector] 
+    public Vector2Int gridPos; // 地块的坐标身份证
+    public GenoType calculatedSeed; // 存放杂交/自交后的种子基因等待收获
+    public int currentMatchPriority = 4; // 记录当前种子的匹配优先级：0:左, 1:上, 2:右, 3:下, 4:自交(默认)
     public TileState currentState = TileState.Empty;    //初始化土地状态
-    public PlantInstanceData currentPlantData;          //当持有该植物的实例数据（含基因）
+    public PlantInstanceData currentPlantData;          //当前持有该植物的实例数据（含基因）
     // public SpeciesData currentSpecies;
     private int ticksPassed = 0;
     private SpriteRenderer sr;
@@ -14,6 +19,13 @@ public class LandTile : MonoBehaviour
     // 缓存计算出的阶段时长，避免每帧重复计算
     private int targetGrowingTicks;
     private int targetFloweringTicks;
+
+
+    // 由 GridManager 在生成或初始化时调用获取坐标信息
+    public void Init(Vector2Int pos)
+    {
+        gridPos = pos;
+    }
 
     //事件订阅与退订
     void OnEnable()
@@ -77,8 +89,10 @@ public class LandTile : MonoBehaviour
         UpdateVisuals();
         if (newState == TileState.Flowering)
         {
-            // TODO: 后续在这里触发 EventBus.TriggerPlantFlowering(this);
-            Debug.Log($"{currentPlantData.speciesTemplate.speciesName} 进入授粉期！");
+            // 进入开花状态同时触发授粉事件，传递当前 LandTile 实例
+            currentMatchPriority = 4; // 每次开花重置优先级
+            Debug.Log($"{currentPlantData.speciesTemplate.speciesName} 在 {gridPos} 发起授粉请求");
+            EventBus.TriggerPlantFlowering(this);
         }
         else if (newState == TileState.Mature)
         {
