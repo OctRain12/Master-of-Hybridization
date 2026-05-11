@@ -5,6 +5,7 @@ public class PlantInstanceData
     public SpeciesData speciesTemplate; // 指向在 Unity 中配置的 ScriptableObject (比如“小麦模板”)
     public GenoType dna;                // 这株植物独一无二的基因序列
 
+
     //构造函数，当播种种子时，把模板和dna数据塞进去
     public PlantInstanceData(SpeciesData template, GenoType plantdna)
     {
@@ -35,8 +36,8 @@ public class PlantInstanceData
     {
         // 假设物种模板基础产量是 2，极品基因系数是 2.0，最终就会掉落 4 个。
         
-        // return Mathf.RoundToInt(speciesTemplate.baseYieldCount * dna.GetYieldModifier()); 
-        return 1;
+        return Mathf.RoundToInt(speciesTemplate.baseYieldCount * dna.GetYieldModifier()); 
+
     }
 
     // 检查是否有特定突变 (方便后期替换模型特效)

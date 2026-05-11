@@ -11,7 +11,9 @@ public class SpeciesData : ScriptableObject
     public int growingTicks;
     public int flowerTicks;
     public GenoType defaultGenoType;
-
+    [Header("产量设置")]
+    public int seedCount;                  //这株植物的种子产量，默认4
+    public int baseYieldCount;          //基础产量
     //各阶段对应颜色
     public Color growingColor = Color.green;
     public Color flowerColor = Color.magenta;

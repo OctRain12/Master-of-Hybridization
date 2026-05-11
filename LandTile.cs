@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public enum TileState{Empty,Growing,Flowering,Mature} 
@@ -102,14 +103,48 @@ public class LandTile : MonoBehaviour
     void UpdateVisuals()
     {
         //根据不同状态切换颜色
-        if(currentState == TileState.Empty) sr.color = Color.white;
-            // 从物种模板中读取配置的颜色
-            var template = currentPlantData.speciesTemplate;
-            switch (currentState)
-            {
-                case TileState.Growing: sr.color = template.growingColor; break;
-                case TileState.Flowering: sr.color = template.flowerColor; break;
-                case TileState.Mature: sr.color = template.matureColor; break;
-            }
+        if(currentState == TileState.Empty)
+        {
+            sr.color = Color.white; // 空地显示白色
+            return;
+        }
+        // 从物种模板中读取配置的颜色
+        var template = currentPlantData.speciesTemplate;
+        switch (currentState)
+        {
+            case TileState.Growing: sr.color = template.growingColor; break;
+            case TileState.Flowering: sr.color = template.flowerColor; break;
+            case TileState.Mature: sr.color = template.matureColor; break;
+        }
     }
+
+    //---收获方法---
+    //先判断是收获种子还是收获果实
+    public void Harvest(bool isSeedMode)
+    {
+        //若植物没成熟直接返回
+        if(currentState != TileState.Mature) return;
+        //针对收获果实和种子的不同情况
+        if(isSeedMode)
+        {
+            //取走算好的种子calculatedSeed
+            int count = currentPlantData.speciesTemplate.seedCount;
+            InventoryManager.Instance.addSeed(currentPlantData.speciesTemplate, calculatedSeed, count);
+        }
+        else
+        {
+            //取走果实。根据其基因产量决定数量
+            int count = currentPlantData.GetActualHarvestQuantity();
+            string name = currentPlantData.speciesTemplate.speciesName;
+            InventoryManager.Instance.addFruit(name, count);
+        }
+        //收获完成后需要将地块清空
+        currentPlantData = null;
+        calculatedSeed = null;
+        currentState = TileState.Empty;
+        UpdateVisuals();
+
+    }
+
+
 }

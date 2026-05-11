@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class NewBehaviourScript : MonoBehaviour
+public class GridManager : MonoBehaviour
 {
     
     [Header("地块设置")]
@@ -38,6 +38,7 @@ public class NewBehaviourScript : MonoBehaviour
 
     void Update()
     {
+        /*-------------改用TestInputManager实现
         //临时测试种植逻辑，采用鼠标左右键
         if(Input.GetMouseButtonDown(0))
         {
@@ -47,7 +48,9 @@ public class NewBehaviourScript : MonoBehaviour
         {
             HandlePlanting(slowGrowSpecies);
         }
+        */
     }
+    /*-------------改用TestInputManager实现
     //种植作物(射线检测)
     void HandlePlanting(SpeciesData species)
     {
@@ -73,7 +76,7 @@ public class NewBehaviourScript : MonoBehaviour
             }
         }
         */
-    }
+    
     // 创建数组，搜索优先级：左 -> 上 -> 右 -> 下
     private Vector2Int[] searchOrder = new Vector2Int[]
     {
