@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Microsoft.Unity.VisualStudio.Editor;
 using UnityEngine;
 
 //创建物种建立菜单
@@ -14,6 +15,9 @@ public class SpeciesData : ScriptableObject
     [Header("产量设置")]
     public int seedCount;                  //这株植物的种子产量，默认4
     public int baseYieldCount;          //基础产量
+
+    [Header("图标")]
+    public Sprite speciesIcon;
     //各阶段对应颜色
     public Color growingColor = Color.green;
     public Color flowerColor = Color.magenta;
