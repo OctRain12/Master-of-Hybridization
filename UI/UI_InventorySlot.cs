@@ -10,14 +10,15 @@ public class UI_InventorySlot : MonoBehaviour
     public Image iconImage;
     public TextMeshProUGUI amountText;
     public TextMeshProUGUI tagText;
-    public GameObject goldHighlight; // 金色边框物体
-    private SeedEntry currentEntry;
+    public GameObject goldHighlight;    // 金色边框物体
+    private SeedEntry? currentEntry;    // 使用可空类型或判定默认值
 
     public void Refresh(SeedEntry entry, int amount, string tag)
     {
         currentEntry = entry;
         // 1. 基础信息显示
         iconImage.sprite = entry.species.speciesIcon; // 假设 SpeciesData 里有图标
+        iconImage.color = Color.white;                  // 确保图片可见
         amountText.text = amount.ToString();
 
         // 2. 显示玩家标记
@@ -27,6 +28,23 @@ public class UI_InventorySlot : MonoBehaviour
         UpdateHighlight(tag);
     }
 
+    //清空格子方法
+    public void ClearSlot()
+    {
+        currentEntry = null;
+        iconImage.sprite = null;
+        iconImage.color = Color.clear; // 透明
+        amountText.text = "";
+        tagText.text = "";
+        goldHighlight.SetActive(false);
+    }
+    //鼠标点击格子
+    public void OnSlotClick()
+    {
+        if(currentEntry == null) return; //避免点击空格子生效
+        Debug.Log($"准备种植：{currentEntry.Value.species.speciesName}");
+        // 这里后续接入：CursorManager.Instance.SetHoldingSeed(currentEntry);
+    }
     private void UpdateHighlight(string tag)
     {
         // 这里可以根据你的需求定制。
@@ -40,10 +58,5 @@ public class UI_InventorySlot : MonoBehaviour
             goldHighlight.SetActive(false);
         }
     }
-    // 鼠标点击格子的逻辑 (准备种植)
-    public void OnSlotClick()
-    {
-        Debug.Log($"选中了种子：{currentEntry.species.speciesName}，准备种植！");
-        // 这里后续接入：CursorManager.Instance.SetHoldingSeed(currentEntry);
-    }
+
 }

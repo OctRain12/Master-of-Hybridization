@@ -45,7 +45,8 @@ public class InventoryManager : MonoBehaviour
         SeedEntry entry = new SeedEntry(species, dna);
         if(seedInventory.ContainsKey(entry)) seedInventory[entry] += count;
         else seedInventory[entry] = count;
-
+        //触发事件广播
+        OnInventoryChanged?.Invoke();
         Debug.Log($"[仓库] 存入种子：{species.speciesName}，基因：{dna}。当前堆叠：{seedInventory[entry]}");
     }
 

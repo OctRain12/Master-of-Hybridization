@@ -14,9 +14,7 @@ public class GridManager : MonoBehaviour
 
     [Header("引用")]
     public GameObject gridPrefab;
-    [Header("物种库")]
-    public SpeciesData fastGrowsSpecies;
-    public SpeciesData slowGrowSpecies;
+
     
     //关键字典，用于以后地块的索引等
     private Dictionary<Vector2Int,GameObject> gridDictionary = new Dictionary<Vector2Int, GameObject>();

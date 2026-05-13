@@ -1,15 +1,18 @@
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class TestInputManager : MonoBehaviour
 {
+    private bool isOnUI; //当前鼠标指针是否正悬停在任何 UI 元素上
     //面板选择对应物种
     [Header("选择物种")]
     public SpeciesData speciesA;
     public SpeciesData speciesB;
     public GridManager gridManager;
-
+    [Header("UI 引用")]
+    public GameObject inventoryUI;
 
     void Start()
     {
@@ -19,7 +22,13 @@ public class TestInputManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        InputManager();
+        OpenUI();
+        isOnUI = EventSystem.current.IsPointerOverGameObject();
+        if(!isOnUI)
+        {
+            InputManager(); //当不在UI上才能射线检测操作
+        }
+
     }
     //输入操作方法
     private void InputManager()
@@ -60,7 +69,19 @@ public class TestInputManager : MonoBehaviour
             }
         }
     }
-
+    //打开背包面板
+    private void OpenUI()
+    {
+        //开关背包逻辑
+        if(Input.GetKeyDown(KeyCode.B))
+        {
+            if(inventoryUI != null)
+            {   Debug.Log(inventoryUI);
+                //取反当前的状态（开变关，关变开
+                inventoryUI.SetActive(!inventoryUI.activeSelf);
+            }
+        }
+    }
 
     //采用射线检测当前鼠标下的地块
     private LandTile GetTileUnderMouse()
