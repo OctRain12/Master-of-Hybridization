@@ -2,6 +2,7 @@ using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using TMPro;
 
 public class TestInputManager : MonoBehaviour
 {
@@ -16,7 +17,7 @@ public class TestInputManager : MonoBehaviour
 
     void Start()
     {
-        
+        inventoryUI.SetActive(false); //初始状态关闭背包UI
     }
 
     // Update is called once per frame
@@ -72,6 +73,14 @@ public class TestInputManager : MonoBehaviour
     //打开背包面板
     private void OpenUI()
     {
+        if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null)
+        {
+            // 如果当前选中的 UI 是一个输入框 (TMP_InputField 或原生的 InputField)
+            if (EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>() != null)
+            {
+                return; // 直接终止！不要检测任何快捷键，让玩家安心打字
+            }
+        }
         //开关背包逻辑
         if(Input.GetKeyDown(KeyCode.B))
         {

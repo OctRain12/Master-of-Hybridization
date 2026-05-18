@@ -9,7 +9,7 @@ public class InventoryManager : MonoBehaviour
     public static InventoryManager Instance;
     //两个字典对应两个仓库，果实和种子
     //1.果实仓库，每次收割传入作物id与数量count
-    public Dictionary<string, int> fruitInventory = new Dictionary<string, int>();
+    public Dictionary<SpeciesData, int> fruitInventory = new Dictionary<SpeciesData, int>();
     //2.种子仓库，每次收割传入种子id与基因对比和数量count，基因对比一致才叠加到一起
     //为了方便判断是否基因一致，引入新结构体SeedEntry
     public Dictionary<SeedEntry, int> seedInventory = new Dictionary<SeedEntry, int>();
@@ -28,14 +28,14 @@ public class InventoryManager : MonoBehaviour
     }
 
     //---收获果实---
-    public void addFruit(string speciesName, int count)
+    public void addFruit(SpeciesData species, int count)
     {
         //先查找一下有没有同类作物在仓库
-        if(fruitInventory.ContainsKey(speciesName)) fruitInventory[speciesName] += count;
-        else fruitInventory[speciesName] = count;
+        if(fruitInventory.ContainsKey(species)) fruitInventory[species] += count;
+        else fruitInventory[species] = count;
         //触发事件广播
         OnInventoryChanged?.Invoke();
-        Debug.Log($"[仓库] 收获果实：{speciesName} x{count}。当前总量：{fruitInventory[speciesName]}");
+        Debug.Log($"[仓库] 收获果实：{species.speciesName} x{count}。当前总量：{fruitInventory[species]}");
     }
 
     //---收获种子---

@@ -17,7 +17,7 @@ public class SpeciesData : ScriptableObject
     public int baseYieldCount;          //基础产量
 
     [Header("图标")]
-    public Sprite speciesIcon;
+    public Sprite speciesSeedIcon;
     //各阶段对应颜色
     public Color growingColor = Color.green;
     public Color flowerColor = Color.magenta;

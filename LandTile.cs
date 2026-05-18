@@ -135,8 +135,8 @@ public class LandTile : MonoBehaviour
         {
             //取走果实。根据其基因产量决定数量
             int count = currentPlantData.GetActualHarvestQuantity();
-            string name = currentPlantData.speciesTemplate.speciesName;
-            InventoryManager.Instance.addFruit(name, count);
+            //string name = currentPlantData.speciesTemplate.speciesName;
+            InventoryManager.Instance.addFruit(currentPlantData.speciesTemplate, count);
         }
         //收获完成后需要将地块清空
         currentPlantData = null;
