@@ -3,6 +3,12 @@ using Unity.VisualScripting;
 using UnityEngine;
 using System;
 
+public enum ItemCategory
+{
+    Seed,   // 种子页
+    Fruit   // 果实页
+}
+
 public class InventoryManager : MonoBehaviour
 {
     // 仓库作为唯一单例,方便被调用
@@ -59,7 +65,50 @@ public class InventoryManager : MonoBehaviour
         seedTags[entry] = tag;
         OnInventoryChanged?.Invoke(); // 标记变了也要刷新 UI
     }
-
+    /// <summary>
+    /// 从背包中扣除指定数量的种子
+    /// </summary>
+    public void Remove(SeedEntry entry, int count)
+    {
+        if(seedInventory.ContainsKey(entry))
+        {
+            seedInventory[entry] -= count;
+            if(seedInventory[entry] <= 0)
+            {
+                seedInventory.Remove(entry);
+                seedTags.Remove(entry); // 同时移除标记
+            }
+            OnInventoryChanged?.Invoke();// 广播：数据变了，UI 会自动重绘
+            Debug.Log($"[仓库] 扣除种子：{entry.species.speciesName}，基因：{entry.dna}，数量：{count}。剩余：{seedInventory.GetValueOrDefault(entry, 0)}");
+        }
+    }
+    /// <summary>
+    /// 重载Remove方法从背包中扣除指定数量的果实
+    /// </summary>
+    public void Remove(SpeciesData species, int count)
+    {
+        if(fruitInventory.ContainsKey(species))
+        {
+            fruitInventory[species] -= count;
+            if(fruitInventory[species] <= 0)
+            {
+                fruitInventory.Remove(species);
+            }
+            OnInventoryChanged?.Invoke();// 广播：数据变了，UI 会自动重绘
+            Debug.Log($"[仓库] 扣除果实：{species.speciesName}，数量：{count}。剩余：{fruitInventory.GetValueOrDefault(species, 0)}");
+        }
+    }
+    /// <summary>
+    /// 获取指定种子的玩家标记（安全查询）
+    /// </summary>
+    public string GetSeedTag(SeedEntry entry)
+    {
+        if (seedTags.TryGetValue(entry, out string tag))
+        {
+            return tag;
+        }
+        return "";
+    }
 }
 public struct SeedEntry
     {

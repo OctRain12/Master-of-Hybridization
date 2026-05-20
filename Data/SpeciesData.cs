@@ -18,6 +18,7 @@ public class SpeciesData : ScriptableObject
 
     [Header("图标")]
     public Sprite speciesSeedIcon;
+    public Sprite speciesFruitIcon;
     //各阶段对应颜色
     public Color growingColor = Color.green;
     public Color flowerColor = Color.magenta;
