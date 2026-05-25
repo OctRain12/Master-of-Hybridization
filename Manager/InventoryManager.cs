@@ -34,7 +34,7 @@ public class InventoryManager : MonoBehaviour
     }
 
     //---收获果实---
-    public void addFruit(SpeciesData species, int count)
+    public void AddFruit(SpeciesData species, int count)
     {
         //先查找一下有没有同类作物在仓库
         if(fruitInventory.ContainsKey(species)) fruitInventory[species] += count;
@@ -45,7 +45,7 @@ public class InventoryManager : MonoBehaviour
     }
 
     //---收获种子---
-    public void addSeed(SpeciesData species, GenoType dna, int count)
+    public void AddSeed(SpeciesData species, GenoType dna, int count)
     {
         //同理先查找是否有同类同基因种子
         SeedEntry entry = new SeedEntry(species, dna);

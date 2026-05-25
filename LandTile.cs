@@ -129,14 +129,14 @@ public class LandTile : MonoBehaviour
         {
             //取走算好的种子calculatedSeed
             int count = currentPlantData.speciesTemplate.seedCount;
-            InventoryManager.Instance.addSeed(currentPlantData.speciesTemplate, calculatedSeed, count);
+            InventoryManager.Instance.AddSeed(currentPlantData.speciesTemplate, calculatedSeed, count);
         }
         else
         {
             //取走果实。根据其基因产量决定数量
             int count = currentPlantData.GetActualHarvestQuantity();
             //string name = currentPlantData.speciesTemplate.speciesName;
-            InventoryManager.Instance.addFruit(currentPlantData.speciesTemplate, count);
+            InventoryManager.Instance.AddFruit(currentPlantData.speciesTemplate, count);
         }
         //收获完成后需要将地块清空
         currentPlantData = null;

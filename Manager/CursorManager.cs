@@ -26,7 +26,7 @@ public class CursorManager : MonoBehaviour
     
     // 两种不同的数据容器，谁有用就存谁
     public SeedEntry heldSeed;
-    public string heldFruit;
+    public SpeciesData heldFruit;
 
     void Awake()
     {
@@ -53,7 +53,7 @@ public class CursorManager : MonoBehaviour
         //拾取种子后切换为拾取种子模式
         cursorItemType = CursorItemType.Seed;
         heldSeed = entry;
-        heldFruit = "";         //置空果实数据
+        heldFruit = null;         //置空果实数据
         heldAmount = amount;
 
         //设置传入种子图标
@@ -69,23 +69,41 @@ public class CursorManager : MonoBehaviour
     {
         //拾取果实后切换为拾取果实模式
         cursorItemType = CursorItemType.Fruit;
-        heldFruit = species.speciesName;
+        heldFruit = species;
         heldAmount = amount;
         heldSeed = default;     //置空种子数据
 
         //传入果实图标
-        //todo:果实图标
-        //cursorIcon.sprite = species.speciesIcon;
+        cursorIcon.sprite = species.speciesFruitIcon;
         cursorAmountText.text = amount.ToString();
         cursorItemUI.SetActive(true);
     }
 
+
+    /// <summary>
+    /// 强制将手里的物品退回到背包仓库中（用于关闭背包、强行中断等安全保护）
+    /// </summary>
+    public void ReturnHeldItemToInventory()
+    {
+        if (cursorItemType == CursorItemType.None) return;
+
+        if (cursorItemType == CursorItemType.Seed) // 说明手里拿的是种子
+        {
+            InventoryManager.Instance.AddSeed(heldSeed.species, heldSeed.dna, heldAmount);
+        }
+        else if (cursorItemType == CursorItemType.Fruit) // 说明手里拿的是果实
+        {
+            InventoryManager.Instance.AddFruit(heldFruit, heldAmount);
+        }
+
+        DropItem(); // 清空手
+}
     //放下/取消方法
     public void DropItem()
     {
         cursorItemType = CursorItemType.None;
         heldSeed = default;
-        heldFruit = "";
+        heldFruit = null;
         heldAmount = 0;
         cursorItemUI.SetActive(false);
     }

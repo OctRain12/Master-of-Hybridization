@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine.EventSystems;
 using UnityEngine.Android;
 
-public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler
+public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("UI 引用")]
     public Image iconImage;
@@ -59,7 +59,8 @@ public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler
     {
         isEmpty = true;
         currentEntry = null;
-        //currentAmount = null;
+        currentFruitData = null;  // 清空果实数据
+        currentAmount = 0;        // 重置数量
         iconImage.sprite = null;
         iconImage.color = Color.clear; // 透明
         amountText.text = "";
@@ -70,7 +71,7 @@ public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler
     public void OnPointerEnter(PointerEventData eventData)
     {
         // 只有当格子不空时或者鼠标没有东西才显示悬浮窗
-        if(isEmpty|| CursorManager. Instance.cursorItemType != CursorItemType.None) return; // 空格子不显示悬浮窗
+        if(isEmpty || CursorManager. Instance.cursorItemType != CursorItemType.None) return; // 空格子不显示悬浮窗
         if(slotCategory == ItemCategory.Seed)
         {
             // 显示种子悬浮窗，传入 currentEntry.Value
@@ -98,7 +99,6 @@ public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler
         {
             if(eventData.button == PointerEventData.InputButton.Left && !isEmpty)
             {
-                //TODO：
                 // 打开标签页面
                 OpenTagInputWindow();
             }
@@ -134,12 +134,16 @@ public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler
 
     private void HandleLeftClick()
     {
+
         //如果鼠标是空的，且格子里面有物品的时候，抓取全部物品
         if(CursorManager.Instance.cursorItemType == CursorItemType.None)
         {
+            if(isEmpty) return; // 空格子不响应
             //如果是种子格子，且不空
-            if(!isEmpty && slotCategory == ItemCategory.Seed)
+            if(slotCategory == ItemCategory.Seed)
             {
+                // 隐藏悬浮窗（如果有的话）
+                UI_Tooltip.Instance.Hide();
                 CursorManager.Instance.PickUp(currentEntry.Value, currentAmount);
                 // 告诉数据层扣除数量 (或者直接清空)
                 InventoryManager.Instance.Remove(currentEntry.Value, currentAmount);
@@ -147,7 +151,7 @@ public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler
                 Debug.Log("拿起了全部物品");
             }
             //如果是果实格子，且不空
-            else if(!isEmpty && slotCategory == ItemCategory.Fruit)
+            else if(slotCategory == ItemCategory.Fruit)
             {
                 CursorManager.Instance.PickUp(currentFruitData, currentAmount);
                 // 告诉数据层扣除数量 (或者直接清空)
@@ -159,10 +163,97 @@ public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler
         else
         {
             // 鼠标拿着东西 -> 放入当前格子 (如果基因一样就堆叠，不一样就交换)
+            // 机制防错：不能把果实放进种子页，也不能把种子放进果实页
+            //if (CursorManager.Instance.heldSeed.species != null && slotCategory != ItemCategory.Seed) return;
+            //if (CursorManager.Instance.heldFruit != null && slotCategory != ItemCategory.Fruit) return;
 
-            CursorManager.Instance.DropItem(); // 先放下当前物品（这里可以改成交换逻辑）
+            //放下方法
+            if(CursorManager.Instance.cursorItemType == CursorItemType.Seed)
+            {
+                HandleSeedPlacement();
+            }
+            else if(CursorManager.Instance.cursorItemType == CursorItemType.Fruit)
+            {
+                HandleFruitPlacement();
+            }
+
+            //CursorManager.Instance.DropItem(); // 先放下当前物品
             
             Debug.Log("放下了物品");
+        }
+    }
+    /// <summary>
+    /// 核心：处理种子的 放下 / 叠加 / 交换 逻辑
+    /// </summary>
+    private void HandleSeedPlacement()
+    {
+        SeedEntry heldSeed = CursorManager.Instance.heldSeed;
+        int heldCount = CursorManager.Instance.heldAmount;
+
+        // 情况 1：目标格子是空的 -> 直接放下
+        if (isEmpty)
+        {
+            InventoryManager.Instance.AddSeed(heldSeed.species, heldSeed.dna, heldCount);
+            CursorManager.Instance.DropItem(); // 清空手
+            Debug.Log($"[背包交互] 种子放入了空格子");
+        }
+        // 情况 2：目标格子有东西 -> 判断基因和物种是否完全一样 (利用我们重写过的 Equals)
+        else if (currentEntry.Equals(heldSeed))
+        {
+            // 完全一样 -> 完美叠加
+            InventoryManager.Instance.AddSeed(heldSeed.species, heldSeed.dna, heldCount);
+            CursorManager.Instance.DropItem();
+            Debug.Log($"[背包交互] 相同种子，完成数量叠加");
+        }
+        // 情况 3：目标格子有东西，且基因或物种不一样 -> 经典位置交换 (Swap)
+        else
+        {
+            // 暂存格子里的旧数据
+            SeedEntry oldSeedInSlot = currentEntry.Value;
+            int oldAmountInSlot = currentAmount;
+
+            // 第一步：把格子里的旧东西先强行“蒸发”（先从数据层删掉）
+            InventoryManager.Instance.Remove(oldSeedInSlot, oldAmountInSlot);
+
+            // 第二步：把手里拿着的新东西放入数据仓库
+            InventoryManager.Instance.AddSeed(heldSeed.species, heldSeed.dna, heldCount);
+
+            // 第三步：让鼠标把格子里的旧东西“抓”起来，完成交换
+            CursorManager.Instance.PickUp(oldSeedInSlot, oldAmountInSlot);
+            
+            Debug.Log($"[背包交互] 基因不同，触发物品位置交换");
+        }
+    }
+
+    /// <summary>
+    /// 核心：处理果实的 放下 / 叠加 / 交换 逻辑
+    /// </summary>
+    private void HandleFruitPlacement()
+    {
+        SpeciesData heldFruit = CursorManager.Instance.heldFruit;
+        int heldCount = CursorManager.Instance.heldAmount;
+
+        if (isEmpty)
+        {
+            Debug.Log($"[背包交互] 果实放入了空格子");
+            InventoryManager.Instance.AddFruit(heldFruit, heldCount);
+            CursorManager.Instance.DropItem(); // 清空手
+        }
+        else if (currentFruitData == heldFruit)
+        {
+            InventoryManager.Instance.AddFruit(heldFruit, heldCount);
+            CursorManager.Instance.DropItem();
+        }
+        else
+        {
+            // 果实交换逻辑
+            SpeciesData oldFruit = currentFruitData;
+            int oldAmount = currentAmount;
+
+            InventoryManager.Instance.Remove(oldFruit, oldAmount);
+                Refresh(heldFruit, heldCount);
+            InventoryManager.Instance.AddFruit(heldFruit, heldCount);
+            CursorManager.Instance.PickUp(oldFruit, oldAmount);
         }
     }
     private void HandleRightClick()
@@ -175,11 +266,23 @@ public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler
                 // 拆分数量=currentAmount/2
                 int splitAmount = currentAmount / 2;
                 //currentEntry可能为空，因此用.Value
-                CursorManager.Instance.PickUp(currentEntry.Value, splitAmount);
-                Debug.Log($"拆分拿起了 {splitAmount} 个物品");
-                // 告知数据层扣除数量
-                InventoryManager.Instance.Remove(currentEntry.Value, splitAmount);
-                // 这里需要调用 InventoryManager 的方法去修改数据
+                //如果在种子页面，拿起种子；如果在果实页面，拿起果实
+                if(slotCategory == ItemCategory.Seed)
+                {
+                    CursorManager.Instance.PickUp(currentEntry.Value, splitAmount);
+                    Debug.Log($"拆分拿起了 {splitAmount} 个种子");
+                    // 告知数据层扣除数量
+                    InventoryManager.Instance.Remove(currentEntry.Value, splitAmount);
+                    // 这里需要调用 InventoryManager 的方法去修改数据
+                }
+                else if(slotCategory == ItemCategory.Fruit)
+                {
+                    CursorManager.Instance.PickUp(currentFruitData, splitAmount);
+                    Debug.Log($"拆分拿起了 {splitAmount} 个果实");
+                    // 告知数据层扣除数量
+                    InventoryManager.Instance.Remove(currentFruitData, splitAmount);
+                    // 这里需要调用 InventoryManager 的方法去修改数据
+                }
             }
         }
     }

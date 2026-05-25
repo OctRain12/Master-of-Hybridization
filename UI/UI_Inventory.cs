@@ -41,6 +41,7 @@ public class UI_Inventory : MonoBehaviour
     public void SwitchCategory(int categoryIndex)
     {
         currentCategory = (ItemCategory)categoryIndex;
+        CursorManager.Instance.ReturnHeldItemToInventory(); // 切换分类前先把鼠标上的物品放回背包，避免切换后物品不见了
         RedRawUI(); // 切换分类后，立刻重新绘制格子内容
     }
     public void RedRawUI()
@@ -84,11 +85,11 @@ public class UI_Inventory : MonoBehaviour
     // --- 渲染果实页 ---
     private void DrawFruitPage()
     {
-        // 果实字典是 Dictionary<string, int>
+        // 果实字典是 Dictionary<SpeciesData, int>
         if (InventoryManager.Instance == null) return;
         
         var fruitList = InventoryManager.Instance.fruitInventory.ToList();
-        //同上装入所有数据
+        //同上装入所有数据，且清空多余格子
         for(int i = 0; i < allSlots.Length; i++)
         {
             if(i < fruitList.Count)
@@ -96,7 +97,10 @@ public class UI_Inventory : MonoBehaviour
                 var pair = fruitList[i];
                 // 填充果实数据 (果实不需要 DNA 字符串，也不需要玩家标签)
                 allSlots[i].Refresh(pair.Key,pair.Value);
-
+            }
+            else
+            {
+                allSlots[i].ClearSlot();
             }
         }
     }

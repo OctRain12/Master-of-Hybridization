@@ -85,8 +85,14 @@ public class TestInputManager : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.B))
         {
             if(inventoryUI != null)
-            {   Debug.Log(inventoryUI);
-                //取反当前的状态（开变关，关变开
+            {   
+                bool nextState = !inventoryUI.activeSelf;   //取反当前的状态（开变关，关变开）
+                //安全回收
+                // 如果接下来的状态是“关闭”，且鼠标正抓着东西，先回收
+                if (nextState == false && CursorManager.Instance.cursorItemType != CursorItemType.None)
+                {
+                    CursorManager.Instance.ReturnHeldItemToInventory();
+                }
                 inventoryUI.SetActive(!inventoryUI.activeSelf);
             }
         }

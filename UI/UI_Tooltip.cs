@@ -35,8 +35,10 @@ public class UI_Tooltip : MonoBehaviour
     /// </summary>
     public void Show(SeedEntry entry)
     {
+
         gameObject.SetActive(true);
         // 1. 设置标题
+        Debug.Log($"显示种子悬浮窗，种子数据：{entry.species.speciesName}，基因：{entry.dna}");
         titleText.text = entry.species.speciesName + " 种子";
 
         // 2. 获取并设置玩家标记
