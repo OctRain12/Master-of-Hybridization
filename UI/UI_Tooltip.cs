@@ -14,6 +14,8 @@ public class UI_Tooltip : MonoBehaviour
     public TextMeshProUGUI dnaText;
     public TextMeshProUGUI descriptionText; 
 
+    [Header("位置偏移设置")]
+    public Vector2 positionOffset = new Vector2(150f, -150f); // 格子偏移量，防止遮挡
     private RectTransform rectTransform;
 
     void Awake()
@@ -23,22 +25,16 @@ public class UI_Tooltip : MonoBehaviour
         gameObject.SetActive(false); // 初始时隐藏
     }
 
-    void Update()
-    {
-        // 让悬浮窗稍微偏离鼠标光标一点距离，防止挡住鼠标
-        Vector2 mousePos = Input.mousePosition;
-        rectTransform.position = mousePos + new Vector2(15f, -15f);
-    }
 
     /// <summary>
     /// 显示并填充种子信息
     /// </summary>
-    public void Show(SeedEntry entry)
+    public void Show(SeedEntry entry, Vector3 slotPosition)
     {
 
         gameObject.SetActive(true);
         // 1. 设置标题
-        Debug.Log($"显示种子悬浮窗，种子数据：{entry.species.speciesName}，基因：{entry.dna}");
+        rectTransform.position = slotPosition + (Vector3)positionOffset;
         titleText.text = entry.species.speciesName + " 种子";
 
         // 2. 获取并设置玩家标记
@@ -52,9 +48,10 @@ public class UI_Tooltip : MonoBehaviour
     /// <summary>
     /// 重载Show方法显示并填充果实信息
     /// </summary>
-    public void Show(SpeciesData species)
+    public void Show(SpeciesData species, Vector3 slotPosition)
     {
         gameObject.SetActive(true);
+        rectTransform.position = slotPosition + (Vector3)positionOffset;
         titleText.text = species.speciesName + " 果实";
         tagText.text = ""; // 果实没有玩家标记
         dnaText.text = ""; // 果实没有基因信息

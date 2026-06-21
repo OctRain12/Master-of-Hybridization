@@ -11,6 +11,9 @@ public enum ItemCategory
 
 public class InventoryManager : MonoBehaviour
 {
+    [Header("经济系统")]
+    public int currentGold = 100; // 初始金币
+
     // 仓库作为唯一单例,方便被调用
     public static InventoryManager Instance;
     //两个字典对应两个仓库，果实和种子
@@ -108,6 +111,37 @@ public class InventoryManager : MonoBehaviour
             return tag;
         }
         return "";
+    }
+    // 购买种子或卖出果实时调用
+    public bool ModifyGold(int amount)
+    {
+        if(currentGold + amount < 0)
+        {
+            Debug.LogWarning("[仓库] 金币不足，无法完成交易。");
+            return false; // 金币不足，交易失败
+        }
+        currentGold += amount;
+        OnInventoryChanged?.Invoke(); // 金币变了也属于背包/仓库数据变动，触发UI刷新
+        return true; // 交易成功
+    }
+    /// <summary>
+    /// 检查并扣除指定数量的果实（用于完成订单）
+    /// </summary>
+    public bool RemoveFruit(SpeciesData species, int count)
+    {
+        if (fruitInventory.ContainsKey(species) && fruitInventory[species] >= count)
+        {
+            fruitInventory[species] -= count;
+            if (fruitInventory[species] <= 0)
+            {
+                fruitInventory.Remove(species);
+            }
+            OnInventoryChanged?.Invoke();
+            Debug.Log($"[仓库] 扣除果实：{species.speciesName}，数量：{count}。剩余：{fruitInventory.GetValueOrDefault(species, 0)}");
+            return true;
+        }
+        Debug.LogWarning("[仓库] 果实数量不足，无法完成交易。");
+        return false;
     }
 }
 public struct SeedEntry

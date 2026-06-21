@@ -31,13 +31,16 @@ public class LandTile : MonoBehaviour
     //事件订阅与退订
     void OnEnable()
     {
-        EventBus.OnTickTrigger += OnTick; 
+        //EventBus.OnTickTrigger += OnTick; 
+        // 订阅时间轴：每过去一小时，植物的内部计时就动一下
+        EventBus.OnHourChanged += HandleHourlyGrowth;
     }
 
     //物体被隐藏或消失的时候退订
     void OnDisable()
     {
-        EventBus.OnTickTrigger -= OnTick;
+        //EventBus.OnTickTrigger -= OnTick;
+        EventBus.OnHourChanged -= HandleHourlyGrowth;
     }
     void Awake()
     {
@@ -63,7 +66,7 @@ public class LandTile : MonoBehaviour
         Debug.Log($"播种成功：{currentPlantData.speciesTemplate.speciesName}，基因：{currentPlantData.dna}");
         
     }
-
+    /*
     //用于被时间广播调用
     public void OnTick()
     {
@@ -80,6 +83,29 @@ public class LandTile : MonoBehaviour
         {
             TransitionTo(TileState.Mature);
         }
+    }
+    */
+    // 对应的时间监听方法
+    private void HandleHourlyGrowth(int day, int hour)
+    {
+        // 只有地块里有植物，且植物还没完全成熟，才需要成长
+        if (currentState != TileState.Empty && currentState != TileState.Mature)
+        {
+            ticksPassed++; // 游戏内过去1小时，等同于增长了 1个 tick
+            
+            Debug.Log($"[生长中] 坐标 {gridPos} ");
+
+            // 检查是否达到状态切换点 
+            //状态逻辑切换,当同时满足状态与节拍要求时，调用切换方法
+            if(currentState == TileState.Growing && ticksPassed > targetGrowingTicks)
+            {
+                TransitionTo(TileState.Flowering);
+            }
+            else if(currentState == TileState.Flowering && ticksPassed > targetFloweringTicks)
+            {
+                TransitionTo(TileState.Mature);
+            }
+            }
     }
 
     //进入状态方法，用于切换状态

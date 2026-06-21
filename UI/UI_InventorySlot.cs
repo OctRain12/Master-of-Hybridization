@@ -75,12 +75,12 @@ public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler, IPointerEnt
         if(slotCategory == ItemCategory.Seed)
         {
             // 显示种子悬浮窗，传入 currentEntry.Value
-            UI_Tooltip.Instance.Show(currentEntry.Value);
+            UI_Tooltip.Instance.Show(currentEntry.Value, this.transform.position);
         }
         else if(slotCategory == ItemCategory.Fruit)
         {
             // 显示果实悬浮窗，传入 currentFruitData
-            UI_Tooltip.Instance.Show(currentFruitData);
+            UI_Tooltip.Instance.Show(currentFruitData,this.transform.position);
         }
     }
     // 鼠标离开时隐藏悬浮窗
@@ -251,7 +251,7 @@ public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler, IPointerEnt
             int oldAmount = currentAmount;
 
             InventoryManager.Instance.Remove(oldFruit, oldAmount);
-                Refresh(heldFruit, heldCount);
+            //Refresh(heldFruit, heldCount);
             InventoryManager.Instance.AddFruit(heldFruit, heldCount);
             CursorManager.Instance.PickUp(oldFruit, oldAmount);
         }
