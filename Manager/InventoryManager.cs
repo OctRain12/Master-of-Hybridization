@@ -34,6 +34,7 @@ public class InventoryManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        Debug.Log("[仓库] InventoryManager 已初始化。");
     }
 
     //---收获果实---

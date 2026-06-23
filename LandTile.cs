@@ -66,25 +66,6 @@ public class LandTile : MonoBehaviour
         Debug.Log($"播种成功：{currentPlantData.speciesTemplate.speciesName}，基因：{currentPlantData.dna}");
         
     }
-    /*
-    //用于被时间广播调用
-    public void OnTick()
-    {
-        //如果土地为空或成熟直接跳过
-        if(currentState == TileState.Empty || currentState == TileState.Mature) return;
-        //每次触发一次，节拍+1
-        ticksPassed++;
-        //状态逻辑切换,当同时满足状态与节拍要求时，调用切换方法
-        if(currentState == TileState.Growing && ticksPassed > targetGrowingTicks)
-        {
-            TransitionTo(TileState.Flowering);
-        }
-        else if(currentState == TileState.Flowering && ticksPassed > targetFloweringTicks)
-        {
-            TransitionTo(TileState.Mature);
-        }
-    }
-    */
     // 对应的时间监听方法
     private void HandleHourlyGrowth(int day, int hour)
     {

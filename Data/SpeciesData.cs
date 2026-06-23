@@ -24,4 +24,8 @@ public class SpeciesData : ScriptableObject
     public Color flowerColor = Color.magenta;
     public Color matureColor = Color.yellow;
 
+    [Header("价格设置")]
+    public int seedPrice;        // 种子价格
+    public int fruitPrice;       // 果实价格
+
 }
