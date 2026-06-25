@@ -13,6 +13,9 @@ public class InventoryManager : MonoBehaviour
 {
     [Header("经济系统")]
     public int currentGold = 100; // 初始金币
+    [Header("快捷栏数据 (固定6个槽位)")]
+    public int hotbarSize = 6;
+    public List<HotbarSlotData> hotbarSlots = new List<HotbarSlotData>();
 
     // 仓库作为唯一单例,方便被调用
     public static InventoryManager Instance;
@@ -35,6 +38,12 @@ public class InventoryManager : MonoBehaviour
     {
         Instance = this;
         Debug.Log("[仓库] InventoryManager 已初始化。");
+    }
+
+    void Start()
+    {
+        InitializeHotbar();
+        Debug.Log("[仓库] 快捷栏已初始化，槽位数量：" + hotbarSize);
     }
 
     //---收获果实---
@@ -144,6 +153,67 @@ public class InventoryManager : MonoBehaviour
         Debug.LogWarning("[仓库] 果实数量不足，无法完成交易。");
         return false;
     }
+    [System.Serializable]
+    public class HotbarSlotData
+    {
+        public bool isEmpty = true;
+        public SeedEntry? seedEntry;
+        public int amount;
+        // 清空快捷栏槽位
+        public void Clear()
+        {
+            isEmpty = true;
+            seedEntry = null;
+            amount = 0;
+        }
+        // 给快捷栏槽位赋值
+        public void Assign(SeedEntry entry, int count)
+        {
+            isEmpty = false;
+            seedEntry = entry;
+            amount = count;
+        }
+    }
+    // 在 Awake 或 Init 中初始化快捷栏
+    private void InitializeHotbar()
+    {
+        hotbarSlots.Clear();
+        for (int i = 0; i < hotbarSize; i++)
+        {
+            hotbarSlots.Add(new HotbarSlotData());
+        }
+    }
+    /// <summary>
+    /// 设置快捷栏某个槽位的数据（由 UI 拖拽交互或点击触发）
+    /// </summary>
+    public void SetHotbarSlot(int index, SeedEntry? entry, int count)
+    {
+        if (index < 0 || index >= hotbarSize) return;
+
+        if (count <= 0)
+        {
+            hotbarSlots[index].Clear();
+        }
+        else
+        {
+            hotbarSlots[index].Assign(entry.Value, count);
+        }
+        OnInventoryChanged?.Invoke(); // 广播刷新：主背包、顶部映射栏、底部常驻栏会同时重绘
+    }
+    /// <summary>
+    /// 快捷栏种子消耗（种植时调用）
+    /// </summary>
+    public void ConsumeHotbarSeed(int index, int count = 1)
+    {
+        if (index < 0 || index >= hotbarSize || hotbarSlots[index].isEmpty) return;
+
+        hotbarSlots[index].amount -= count;
+        if (hotbarSlots[index].amount <= 0)
+        {
+            hotbarSlots[index].Clear();
+        }
+        OnInventoryChanged?.Invoke();
+    }
 }
 public struct SeedEntry
     {
@@ -168,3 +238,4 @@ public struct SeedEntry
             return (species.GetHashCode() * 31) + dna.GetHashCode();
         }
     }
+

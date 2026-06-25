@@ -25,6 +25,7 @@ public class TestInputManager : MonoBehaviour
     {
         OpenUI();
         isOnUI = EventSystem.current.IsPointerOverGameObject();
+        OnMouseOver();
         if(!isOnUI)
         {
             InputManager(); //当不在UI上才能射线检测操作
@@ -110,5 +111,28 @@ public class TestInputManager : MonoBehaviour
             return hit.collider.GetComponent<LandTile>();
         }
         return null;
+    }
+
+    // 鼠标检测
+    private void OnMouseOver()
+    {
+        if (Input.GetMouseButtonDown(0)) // 当玩家按下左键
+        {
+            // 1. 检查是否点在了 UI 上 (如果是点在背包里或者切换工具按钮上，绝对不能触发重置)
+            if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+            {
+                return; // 点的是 UI，跳过重置判定
+            }
+
+            // 2. 发射射线，看看鼠标底下有没有带 Collider 的土地
+            LandTile isOnLandTile = GetTileUnderMouse();
+
+            // 如果鼠标底下什么都没点到，或者点到的物体身上没有 LandTile 组件
+            if (isOnLandTile == null)
+            {
+                // 说明玩家点在了土地外面的世界，执行全局重置
+                CursorManager.Instance.ResetCursorState();
+            }
+        }
     }
 }

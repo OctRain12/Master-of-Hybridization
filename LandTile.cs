@@ -46,6 +46,63 @@ public class LandTile : MonoBehaviour
     {
         sr = GetComponent<SpriteRenderer>();
     }
+    private void OnMouseDown()
+    {
+        // ==========================================
+        // 1. 快捷栏播种模式检测
+        // ==========================================
+        if (CursorManager.Instance.isHotbarPlantMode)
+        {
+            if (currentState == TileState.Empty)
+            {
+                int hotbarIndex = CursorManager.Instance.activeHotbarIndex;
+                SeedEntry seedToPlant = CursorManager.Instance.heldSeed;
+                // 获取对应种子数据信息，临时变量
+                SpeciesData speciesTemplate = seedToPlant.species;
+                GenoType dna = seedToPlant.dna;
+
+                // 种植对应种子
+
+                Plant(new PlantInstanceData(speciesTemplate, dna));
+
+                // 扣除数据层快捷栏里的种子数量
+                InventoryManager.Instance.ConsumeHotbarSeed(hotbarIndex, 1);
+
+                // 联动刷新鼠标上的数字镜像
+                var updatedData = InventoryManager.Instance.hotbarSlots[hotbarIndex];
+                if (updatedData.isEmpty)
+                {
+                    CursorManager.Instance.ExitHotbarPlantMode(); // 种子扣光了，退出播种
+                }
+                else
+                {
+                    CursorManager.Instance.RefreshHotbarPlantAmount(updatedData.amount); // 还有剩，更新鼠标数字
+                }
+                Debug.Log($"[快捷栏播种] 成功在 {gridPos} 种下种子，快捷栏数量同步扣除。");
+            }
+            else
+            {
+                // 土地已经有作物，取消播种模式
+                CursorManager.Instance.ExitHotbarPlantMode();
+                Debug.Log("[播种失败] 该地块已有作物，退出播种模式。");
+            }
+            return;
+        }
+        // ==========================================
+        // 2. 工具收获/提取模式检测
+        // ==========================================
+            ToolMode currentTool = CursorManager.Instance.currentToolMode;
+
+            if (currentTool == ToolMode.FruitBasket)
+            {
+                Harvest(false); // 收获果实
+            }
+            else if (currentTool == ToolMode.SeedExtractor)
+            {
+                Harvest(true); // 收获种子
+            }
+    }
+    
 
     /// <summary>
     /// 播种方法：接收的是一个包含基因信息的实例数据包
