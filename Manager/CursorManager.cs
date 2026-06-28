@@ -53,10 +53,12 @@ public class CursorManager : MonoBehaviour
         SwitchToolMode(ToolMode.None);
 
         isHotbarPlantMode = true;
+        Debug.Log($"[播种] 激活快捷栏虚拟播种模式");
         activeHotbarIndex = hotbarIndex;
 
         // 让鼠标视觉上变成种子
         cursorItemType = CursorItemType.Seed;
+        cursorItemUI.SetActive(true);
         heldSeed = entry;
         heldAmount = amount;
 
@@ -83,6 +85,7 @@ public class CursorManager : MonoBehaviour
     public void ExitHotbarPlantMode()
     {
         isHotbarPlantMode = false;
+        Debug.Log($"[播种] 退出快捷栏虚拟播种模式");
         activeHotbarIndex = -1;
         DropItem();
     }
@@ -107,16 +110,19 @@ public class CursorManager : MonoBehaviour
     /// </summary>
     public void ResetCursorState()
     {
+        if(this == null) return; // 防止在场景切换时，CursorManager 被销毁后还调用了这个方法
         // 情况 1：如果是快捷栏虚拟播种模式点空了
         if (isHotbarPlantMode)
         {
             // 因为是快捷栏映射，真实的种子数量根本没离开过数据层
             // 只需要干脆利落地“退出播种状态”并清理鼠标贴图即可
-            ExitHotbarPlantMode();
-            //Debug.Log("[指针重置] 快捷栏播种取消，种子安然无恙。");
+            // 点空地时，我们只需要把鼠标状态清空，不能调用退回仓库的方法
+            CancelPlantModeCheck();
+            Debug.Log("[指针重置] 快捷栏播种取消，种子安然无恙。");
+            return;
         }
         // 情况 2：如果是主背包里真实抓起来的物品（种子或果实）
-        else if (cursorItemType != CursorItemType.None && (heldSeed.species != null || !string.IsNullOrEmpty(heldFruit.speciesName)))
+        else if (cursorItemType != CursorItemType.None && (heldSeed.species != null || !string.IsNullOrEmpty(heldFruit?.speciesName)))
         {
             // 触发安全回收，把实体物品退回 InventoryManager 仓库，防止物品蒸发
             ReturnHeldItemToInventory();
@@ -185,7 +191,7 @@ public class CursorManager : MonoBehaviour
         }
 
         DropItem(); // 清空手
-}
+    }
     //放下/取消方法
     public void DropItem()
     {

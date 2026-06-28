@@ -38,7 +38,6 @@ public class UI_StatusHUD : MonoBehaviour
     private void UpdateGoldUI()
     {
         if (InventoryManager.Instance == null) return;
-        Debug.Log($"[UI] 刷新金币显示: {InventoryManager.Instance.currentGold}");
         goldText.text = $"金币: {InventoryManager.Instance.currentGold}";
     }
 }

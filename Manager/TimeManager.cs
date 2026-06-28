@@ -57,7 +57,7 @@ public class TimeManager : MonoBehaviour
 
             //1. 触发每小时的全局广播 (植物生长会听这个)
             EventBus.TriggerHourChanged(currentDay, currentHour);
-            Debug.Log($"[时间] 第 {currentDay} 天, 此时是：{currentHour}:00 ({currentPhase})");
+            // Debug.Log($"[时间] 第 {currentDay} 天, 此时是：{currentHour}:00 ({currentPhase})");
             // 2. 检测日夜状态切换
             CheckPhaseChange();
         }

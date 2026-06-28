@@ -4,17 +4,17 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using Unity.VisualScripting;
 public class UI_HotbarSlot : MonoBehaviour, IPointerClickHandler
 {
     [Header("配置索引 (0-5)")]
     public int slotIndex;
 
     [Header("UI 组件引用")]
-    public GameObject inventoryUI;
     public Image iconImage;
     public TextMeshProUGUI amountText;
 
-    private bool isEmpty = true;
+    public bool isEmpty = true;
     private SeedEntry currentEntry;
     private int currentAmount;
 
@@ -23,8 +23,7 @@ public class UI_HotbarSlot : MonoBehaviour, IPointerClickHandler
         InventoryManager.OnInventoryChanged += RefreshUI;
         //RefreshUI();
     }
-
-    void OnDisable()
+     void OnDisable()
     {
         InventoryManager.OnInventoryChanged -= RefreshUI;
     }
@@ -56,14 +55,18 @@ public class UI_HotbarSlot : MonoBehaviour, IPointerClickHandler
     public void OnPointerClick(PointerEventData eventData)
     {
         // 场景 A：打开背包时，点击快捷栏槽位
-        if (inventoryUI != null && inventoryUI.activeSelf)
+        if (UI_Inventory.Instance != null && UI_Inventory.Instance.IsOpen)
         {
             HandleBackpackModeClick();
         }
         // 场景 B：关闭背包时，点击底部快捷栏槽位 -> 进入虚拟拾取播种模式
         else
         {
-            if (isEmpty) return;
+            if (isEmpty) 
+            {
+                return;
+            }
+            Debug.Log($"[快捷栏] 点击槽位 {slotIndex}，尝试进入虚拟播种模式");
             CursorManager.Instance.ActivateHotbarPlantMode(slotIndex, currentEntry, currentAmount);
         }
     }

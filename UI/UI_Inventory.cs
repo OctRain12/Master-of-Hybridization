@@ -7,24 +7,28 @@ using Unity.VisualScripting;
 
 public class UI_Inventory : MonoBehaviour
 {
-    public Transform contentTransform;  //存放格子的父节点
-
+    public static UI_Inventory Instance; // 单例模式，方便其他脚本调用背包UI
+    public Transform contentTransform;  //  存放仓库格子的父节点
+    public Transform hotbarTransform;  // 存放快捷栏格子的父节点
+    public bool IsOpen => gameObject.activeSelf;    // 当前背包UI是否打开
 
     [Header("当前激活分类")]
     public ItemCategory currentCategory = ItemCategory.Seed; // 默认显示种子页
 
     private UI_InventorySlot[] allSlots;
+    private UI_HotbarSlot[] hotbarSlots;
 
 
     void Awake()
     {
+        Instance = this;
         //启动时获取父节点下的所有格子
-         allSlots = contentTransform.GetComponentsInChildren<UI_InventorySlot>(true);
+        allSlots = contentTransform.GetComponentsInChildren<UI_InventorySlot>(true);
+        hotbarSlots = GetComponentsInChildren<UI_HotbarSlot>(true);
     }
 
     void OnEnable()
     {
-        
         InventoryManager.OnInventoryChanged += RedRawUI;
         RedRawUI();
     }
@@ -42,7 +46,7 @@ public class UI_Inventory : MonoBehaviour
     public void SwitchCategory(int categoryIndex)
     {
         currentCategory = (ItemCategory)categoryIndex;
-        CursorManager.Instance.ReturnHeldItemToInventory(); // 切换分类前先把鼠标上的物品放回背包，避免切换后物品不见了
+        CursorManager.Instance.ResetCursorState(); // 切换分类前先把鼠标上的物品放回背包，避免切换后物品不见了
         RedRawUI(); // 切换分类后，立刻重新绘制格子内容
     }
     public void RedRawUI()
@@ -55,6 +59,8 @@ public class UI_Inventory : MonoBehaviour
         {
             DrawFruitPage();
         }
+        DrawHotbar();
+
     }
     // --- 渲染种子页 ---
     private void DrawSeedPage()
@@ -105,7 +111,18 @@ public class UI_Inventory : MonoBehaviour
             }
         }
     }
-    public void RedrawUI()
+    private void DrawHotbar()
+    {
+        if (InventoryManager.Instance == null) return;
+
+        // 遍历所有快捷栏槽位，刷新 UI
+        for(int i = 0; i < hotbarSlots.Length; i++)
+        {
+            hotbarSlots[i].RefreshUI();
+        }
+
+    }
+    /*public void RedrawUI()
     {
         if (InventoryManager.Instance == null) return;
         //将种子字典转换为列表方便索引
@@ -129,5 +146,5 @@ public class UI_Inventory : MonoBehaviour
                 allSlots[i].ClearSlot();
             }
         }
-    }
+    }*/
 }
