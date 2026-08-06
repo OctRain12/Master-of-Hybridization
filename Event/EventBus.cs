@@ -31,8 +31,16 @@ public static class EventBus
     public static void TriggerPhaseChanged(DayPhase phase) => OnPhaseChanged?.Invoke(phase);
     //-------------开花授粉事件----------------
     //传递 LandTile 脚本本身，方便 GridManager 获取其坐标和数据
-    public static event Action<LandTile> OnPlantFlowering;
+    /*public static event Action<LandTile> OnPlantFlowering;
     public static void TriggerPlantFlowering(LandTile tile) => OnPlantFlowering?.Invoke(tile);
+    */
+    // 切换为UI_PlotSlot 传递，方便杂交计算器获取其坐标和数据
+    public static event Action<UI_PlotSlot> OnPlantFlowering;
+    public static void TriggerPlantFlowering(UI_PlotSlot slot) => OnPlantFlowering?.Invoke(slot);
+    // UI 土坑相关事件
+    // 土坑点击事件
+    public static event Action<UI_PlotSlot> OnPlotClicked;
+    public static void TriggerPlotClicked(UI_PlotSlot slot) => OnPlotClicked?.Invoke(slot);
     // 当玩家切换工具模式时触发
     public static event Action<ToolMode> OnToolModeChanged;
     public static void TriggerToolModeChanged(ToolMode newMode) => OnToolModeChanged?.Invoke(newMode);

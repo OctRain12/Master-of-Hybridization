@@ -34,46 +34,6 @@ public class GridManager : MonoBehaviour
         EventBus.OnPlantFlowering -= HandleFlowering;
     }
 
-    void Update()
-    {
-        /*-------------改用TestInputManager实现
-        //临时测试种植逻辑，采用鼠标左右键
-        if(Input.GetMouseButtonDown(0))
-        {
-            HandlePlanting(fastGrowsSpecies);
-        }
-        if(Input.GetMouseButtonDown(1))
-        {
-            HandlePlanting(slowGrowSpecies);
-        }
-        */
-    }
-    /*-------------改用TestInputManager实现
-    //种植作物(射线检测)
-    void HandlePlanting(SpeciesData species)
-    {
-        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition),Vector2.zero);
-        if(hit.collider != null)
-        {
-            LandTile tile = hit.collider.GetComponent<LandTile>();
-            if(tile != null && tile.currentState == TileState.Empty)
-            {
-                GenoType mockDna = species.defaultGenoType; //获取Dna模板
-                PlantInstanceData newSeed = new PlantInstanceData(species, mockDna);
-                tile.Plant(newSeed);
-            }
-        }
-        //采用射线检测点击的土地块
-        /*RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition),Vector2.zero);
-        if(hit.collider != null)
-        {
-            LandTile tile = hit.collider.GetComponent<LandTile>();
-            if(tile != null && tile.currentState == TileState.Empty)
-            {
-                tile.Plant(species);
-            }
-        }
-        */
     
     // 创建数组，搜索优先级：左 -> 上 -> 右 -> 下
     private Vector2Int[] searchOrder = new Vector2Int[]
@@ -106,7 +66,7 @@ public class GridManager : MonoBehaviour
         }
     }
     // 杂交匹配逻辑
-    private void HandleFlowering(LandTile requester)
+    private void HandleFlowering(UI_PlotSlot requester)
     {
         // 1. 初始状态：先给自己设一个保底的自交种子（优先级 4）
         requester.calculatedSeed = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, null);
@@ -148,35 +108,7 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
-        /*-----------旧检测方法-----------
-        // 默认置空
-        LandTile partner= null;
-        // 遍历搜索优先级
-        foreach(Vector2Int offset in searchOrder)
-        {
-            Vector2Int targetPos = requester.gridPos + offset;
-            // 通过字典检查边界
-            if(gridDictionary.ContainsKey(targetPos))
-            {
-                LandTile neighborTile = gridDictionary[targetPos].GetComponent<LandTile>();
-                // 检查是否满足授粉条件（有植物且开花且同物种）
-                if(neighborTile.currentState == TileState.Flowering && 
-                   neighborTile.currentPlantData != null &&
-                   neighborTile.currentPlantData.speciesTemplate == requester.currentPlantData.speciesTemplate)
-                {
-                    partner= neighborTile;
-                    break; // 找到第一个符合条件的邻居后停止搜索
-                }
-            }
-        }
-        // 调用计算器得出下一代基因
-        // 如果 partner 为 null，BreedingCalculator 内部会自动处理为自交
-        GenoType nextGen = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, partner?.currentPlantData);
-        // 将结果存回地块，等玩家收割时取用
-        requester.calculatedSeed = nextGen;
-        // 输出日志
-        Debug.Log($"[育种] 坐标 {requester.gridPos} 已完成匹配。父本: {(partner != null ? partner.gridPos.ToString() : "自交")}. 结果: {nextGen}");
-        -----------旧检测方法-----------*/
+
     }
     
     // 辅助方法：获取相反方向的索引

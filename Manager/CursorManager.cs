@@ -21,6 +21,10 @@ public class CursorManager : MonoBehaviour
     public Image cursorIcon;            //拿去物品UI图标
     public TextMeshProUGUI cursorAmountText; //拿取物品数量
 
+    [Header("工具图标配置")]
+    public Sprite sickleIcon; // 镰刀图标
+    public Sprite gloveIcon;  // 手套图标
+
     [Header("当前拾取物品")]
     public CursorItemType cursorItemType = CursorItemType.None; //默认无拿取
     public int heldAmount;
@@ -90,7 +94,7 @@ public class CursorManager : MonoBehaviour
         DropItem();
     }
     // 取消播种模式
-    private void CancelPlantModeCheck()
+    /*private void CancelPlantModeCheck()
     {
         // 如果判定没有点到可交互土地，退出模式
         // 在 LandTile 里成功种植时，会提早取消或刷新这个 Check
@@ -104,7 +108,7 @@ public class CursorManager : MonoBehaviour
                 Debug.Log("[播种] 点击了无效区域，退出播种模式。");
             }
         }
-    }
+    }*/
     /// <summary>
     /// 💡 全局重置指针状态（安全退回物品，清除工具形态，恢复普通指针）
     /// </summary>
@@ -117,7 +121,7 @@ public class CursorManager : MonoBehaviour
             // 因为是快捷栏映射，真实的种子数量根本没离开过数据层
             // 只需要干脆利落地“退出播种状态”并清理鼠标贴图即可
             // 点空地时，我们只需要把鼠标状态清空，不能调用退回仓库的方法
-            CancelPlantModeCheck();
+            ExitHotbarPlantMode();
             Debug.Log("[指针重置] 快捷栏播种取消，种子安然无恙。");
             return;
         }
@@ -200,6 +204,8 @@ public class CursorManager : MonoBehaviour
         heldFruit = null;
         heldAmount = 0;
         cursorItemUI.SetActive(false);
+        // 恢复普通指针
+        Cursor.visible = true;
     }
 
     // 切换工具模式（果篮/种子提取器）
@@ -214,17 +220,37 @@ public class CursorManager : MonoBehaviour
         if (currentToolMode != ToolMode.None)
         {
             cursorItemType = CursorItemType.Tool;
-            //cursorItemUI.SetActive(true);
+            cursorItemUI.SetActive(true);
             cursorIcon.gameObject.SetActive(true);
             cursorIcon.color = Color.white;
             cursorAmountText.text = "";
             // 改变光标为工具图标
-            // cursorIcon.sprite = 工具图标; 
+            cursorIcon.sprite = GetToolSprite(currentToolMode); 
+            // 隐藏指针
+            Cursor.visible = false;
             Debug.Log($"[工具切换] 当前手持工具: {currentToolMode}");
         }
         else
         {
             DropItem();
+        }
+        
+    }
+    /// <summary>
+    /// 辅助方法：根据枚举返回对应的 Sprite
+    /// </summary>
+    private Sprite GetToolSprite(ToolMode mode)
+    {
+        switch (mode)
+        {
+            case ToolMode.FruitBasket: // 果篮模式
+                return sickleIcon;
+            case ToolMode.SeedExtractor:  // 手套模式
+                return gloveIcon;
+            // 如果有果篮或种子提取器，在这里增加对应图标变量即可：
+            // case ToolMode.FruitBasket: return fruitBasketIcon; 
+            default:
+                return null;
         }
     }
     /// <summary>
@@ -254,7 +280,7 @@ public class CursorManager : MonoBehaviour
         if (isHotbarPlantMode && Input.GetMouseButtonDown(0))
         {
             // 如果鼠标没有悬停在土地地块上，且没有点在 UI 上，则在 LateUpdate 或下一帧判定取消
-            Invoke("CancelPlantModeCheck", 0.05f);
+            //Invoke("CancelPlantModeCheck", 0.05f);
         }
     }
 }

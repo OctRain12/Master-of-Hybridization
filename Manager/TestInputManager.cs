@@ -3,6 +3,8 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
+using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class TestInputManager : MonoBehaviour
 {
@@ -11,11 +13,14 @@ public class TestInputManager : MonoBehaviour
     [Header("选择物种")]
     public SpeciesData speciesA;
     public SpeciesData speciesB;
-    public GridManager gridManager;
     [Header("UI 引用")]
     public GameObject inventoryUI;
     [Header("HUD面板引用")]
     public CanvasGroup hudCanvasGroup;
+
+    [Header("UI 射线检测必要组件")]
+    public EventSystem eventSystem;
+    public GraphicRaycaster graphicRaycaster; // 画布上的 GraphicRaycaster 组件
 
     void Start()
     {
@@ -28,22 +33,25 @@ public class TestInputManager : MonoBehaviour
         OpenInventoryUI();
         isOnUI = EventSystem.current.IsPointerOverGameObject();
         OnMouseOver();
-        if(!isOnUI)
+        /*if(!isOnUI)
         {
-            InputManager(); //当不在UI上才能射线检测操作
-        }
+            // InputManager(); //当不在UI上才能射线检测操作
+            
+        }*/
+        InputManager(); // 采用UI检测
 
     }
     //输入操作方法
     private void InputManager()
     {
         //获取鼠标下的地块
-        LandTile hoveredTile = GetTileUnderMouse();
+        UI_PlotSlot hoveredTile = GetPlotUnderMouse();
         if(hoveredTile == null) return;
         //种植模式(鼠标左键)
         if(Input.GetMouseButtonDown(0))
         {
-            OnMouseDownPlant(hoveredTile); //调用地块的鼠标点击方法
+            // OnMouseDownPlant(hoveredTile); //调用地块的鼠标点击方法
+            HandleMouseClick();
         }
         //按键1：种植A,需要判断是否为空土地
         if(Input.GetKeyDown(KeyCode.Alpha1))
@@ -116,7 +124,7 @@ public class TestInputManager : MonoBehaviour
     }
 
     //采用射线检测当前鼠标下的地块
-    private LandTile GetTileUnderMouse()
+    /*private LandTile GetTileUnderMouse()
     {
         //获取对应世界坐标
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -126,6 +134,62 @@ public class TestInputManager : MonoBehaviour
         {
             return hit.collider.GetComponent<LandTile>();
         }
+        return null;
+    }*/
+    // UI鼠标点击检测
+    private void HandleMouseClick()
+    {
+        // 尝试获取鼠标当前悬停的 UI 土坑
+        UI_PlotSlot hoveredPlot = GetPlotUnderMouse();
+        if (hoveredPlot != null)
+        {
+            // 情况 A：点中了有效土坑，执行播种或收获逻辑
+            OnMouseDownPlant(hoveredPlot);
+            Debug.Log($"[鼠标点击] 成功点击了土坑 {hoveredPlot.gridPos}，执行对应操作。");
+        }
+        else
+        {
+            // 情况 B：没有点到任何土坑
+            // 检查是不是点在了其他 UI 上（比如背包界面、功能按钮）
+            /*if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            {
+                return; // 点到了背包或按钮，跳过重置，不影响操作
+            }*/
+
+            // 点到了既不是土坑，也不是其他 UI 的真正空白区域，触发重置
+            CursorManager.Instance.ResetCursorState();
+            Debug.Log("[鼠标点击] 没有点击到任何土坑，执行全局重置。");
+        }
+    }
+
+    /// <summary>
+    /// 💡 新版的 UI 射线检测：获取鼠标指针下方挂载了 UI_PlotSlot 的 UI 元素
+    /// </summary>
+    private UI_PlotSlot GetPlotUnderMouse()
+    {
+        if (graphicRaycaster == null || eventSystem == null)
+        {
+            // 如果面板上没拖，自动动态获取
+            graphicRaycaster = FindObjectOfType<GraphicRaycaster>();
+            eventSystem = EventSystem.current;
+        }
+
+        PointerEventData pointerData = new PointerEventData(eventSystem);
+        pointerData.position = Input.mousePosition;
+
+        List<RaycastResult> results = new List<RaycastResult>();
+        graphicRaycaster.Raycast(pointerData, results);
+
+        // 遍历射线击中的所有 UI 元素
+        foreach (RaycastResult result in results)
+        {
+            UI_PlotSlot plot = result.gameObject.GetComponent<UI_PlotSlot>();
+            if (plot != null)
+            {
+                return plot; // 成功找到土坑，返回它！
+            }
+        }
+
         return null;
     }
 
@@ -153,7 +217,7 @@ public class TestInputManager : MonoBehaviour
             }
         }
     }
-        private void OnMouseDownPlant(LandTile hoveredTile)
+        private void OnMouseDownPlant(UI_PlotSlot hoveredTile)
     {
         // ==========================================
         // 1. 快捷栏播种模式检测
