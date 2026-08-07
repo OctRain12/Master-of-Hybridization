@@ -89,7 +89,7 @@ public class InventoryManager : MonoBehaviour
             if(seedInventory[entry] <= 0)
             {
                 seedInventory.Remove(entry);
-                seedTags.Remove(entry); // 同时移除标记
+                // seedTags.Remove(entry); // 同时移除标记
             }
             OnInventoryChanged?.Invoke();// 广播：数据变了，UI 会自动重绘
             Debug.Log($"[仓库] 扣除种子：{entry.species.speciesName}，基因：{entry.dna}，数量：{count}。剩余：{seedInventory.GetValueOrDefault(entry, 0)}");

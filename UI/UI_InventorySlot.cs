@@ -258,10 +258,10 @@ public class UI_InventorySlot : MonoBehaviour, IPointerClickHandler, IPointerEnt
     }
     private void HandleRightClick()
     {
-        //如果鼠标是空的，且格子里有>=1的物品
+        //如果鼠标是空的，且格子里有>=2的物品
         if(CursorManager.Instance.cursorItemType == CursorItemType.None)
         {
-            if(!isEmpty && currentAmount >=1)
+            if(!isEmpty && currentAmount >=2)
             {
                 // 拆分数量=currentAmount/2
                 int splitAmount = currentAmount / 2;

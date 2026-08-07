@@ -149,7 +149,7 @@ public class UI_PlotSlot : MonoBehaviour{
         {
             plantImage.sprite = currentSprite;
             plantImage.color = Color.white;
-            plantImage.SetNativeSize();
+            //plantImage.SetNativeSize();
         }
         else
         {
