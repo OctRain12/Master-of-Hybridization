@@ -163,7 +163,7 @@ public class TestInputManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 💡 新版的 UI 射线检测：获取鼠标指针下方挂载了 UI_PlotSlot 的 UI 元素
+    /// 新版的 UI 射线检测：获取鼠标指针下方挂载了 UI_PlotSlot 的 UI 元素
     /// </summary>
     private UI_PlotSlot GetPlotUnderMouse()
     {
@@ -179,15 +179,17 @@ public class TestInputManager : MonoBehaviour
 
         List<RaycastResult> results = new List<RaycastResult>();
         graphicRaycaster.Raycast(pointerData, results);
-
-        // 遍历射线击中的所有 UI 元素
-        foreach (RaycastResult result in results)
+        //  没有任何 UI 被击中时立即返回
+        if (results == null || results.Count == 0) 
         {
-            UI_PlotSlot plot = result.gameObject.GetComponent<UI_PlotSlot>();
-            if (plot != null)
-            {
-                return plot; // 成功找到土坑，返回它！
-            }
+            return null;
+        }
+
+        //  射线击中的 UI 元素
+        UI_PlotSlot plot = results[0].gameObject.GetComponentInParent<UI_PlotSlot>();
+        if (plot != null)
+        {
+            return plot; // 成功找到土坑，返回它！
         }
 
         return null;
@@ -200,7 +202,7 @@ public class TestInputManager : MonoBehaviour
         if (Input.GetMouseButtonDown(0)) // 当玩家按下左键
         {
             // 1. 检查是否点在了 UI 上 (如果是点在背包里或者切换工具按钮上，绝对不能触发重置)
-            if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+            if (EventSystem.current.IsPointerOverGameObject())
             {
                 return; // 点的是 UI，跳过重置判定
             }

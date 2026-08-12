@@ -54,6 +54,14 @@ public class UI_MerchantWindow : MonoBehaviour
         seedSlots = seedGridContext.GetComponentsInChildren<UI_SeedShopSlot>();
         fruitSlots = fruitGridContext.GetComponentsInChildren<UI_FruitShopSlot>();
     }
+    void Start()
+{
+    // 给输入框绑定监听：当玩家手动在输入框打字时触发
+    if (popupQuantityInput != null)
+    {
+        popupQuantityInput.onValueChanged.AddListener(OnInputQuantityChanged);
+    }
+}
     void OnEnable()
     {
         InventoryManager.OnInventoryChanged += RefreshShopUI;
@@ -151,6 +159,29 @@ public class UI_MerchantWindow : MonoBehaviour
         purchasePopupPanel.SetActive(true);
     }
 
+    // 监听玩家手打输入的数字
+    private void OnInputQuantityChanged(string input)
+    {
+        if (int.TryParse(input, out int parsedQuantity))
+        {
+            // 限制在 1 ~ maxQuantityLimit 之间
+            currentQuantity = Mathf.Clamp(parsedQuantity, 1, maxQuantityLimit);
+        }
+        else
+        {
+            currentQuantity = 1;
+        }
+
+        // 刷新价格显示（注意：不要在 OnInputQuantityChanged 内部再重新赋值 popupQuantityInput.text，否则光标会跳）
+        UpdatePriceDisplay();
+    }
+
+    // 统一价格刷新逻辑
+    private void UpdatePriceDisplay()
+    {
+        int totalPrice = currentItemPrice * currentQuantity;
+        popupPriceText.text = isPopupForSeed ? $"总计支付: {totalPrice}" : $"预计收入: {totalPrice}";
+    }
     // --- 数量加减控制 (Minus/Plus 按钮绑定) ---
     public void ModifyQuantity(int amount)
     {
@@ -164,9 +195,10 @@ public class UI_MerchantWindow : MonoBehaviour
         popupQuantityInput.text = currentQuantity.ToString();
         
         // 计算总价
-        int totalPrice = currentItemPrice * currentQuantity;
+        // int totalPrice = currentItemPrice * currentQuantity;
         // 更新弹窗价格显示
-        popupPriceText.text = isPopupForSeed ? $"总计支付: {totalPrice}" : $"预计收入: {totalPrice}";
+        UpdatePriceDisplay();
+        // popupPriceText.text = isPopupForSeed ? $"总计支付: {totalPrice}" : $"预计收入: {totalPrice}";
     }
     // --- 4. 确定 / 取消 操作 (Confirm/Cancel 按钮绑定) ---
     public void OnConfirmClick()

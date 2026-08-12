@@ -17,6 +17,11 @@ public class UI_PlotSlot : MonoBehaviour{
     public int currentMatchPriority = 4; // 记录当前种子的匹配优先级：0:左, 1:上, 2:右, 3:下, 4:自交(默认)
     public TileState currentState = TileState.Empty;    //初始化土地状态
     public PlantInstanceData currentPlantData;          //当前持有该植物的实例数据（含基因）
+
+    [Header("播种时间")]    
+    public int plantedDay;
+    public int plantedHour;
+    private float growthOffset; // 每个人独一无二的生长偏置（小时）
     // public SpeciesData currentSpecies;
     private int ticksPassed = 0;
     
@@ -52,6 +57,15 @@ public class UI_PlotSlot : MonoBehaviour{
         targetGrowingTicks = currentPlantData.GetActualGrowingTicks();
         targetFloweringTicks = currentPlantData.GetActualFloweringTicks();
 
+        // 记录种植时刻的时间戳
+        if (TimeManager.Instance != null)
+        {
+            plantedDay = TimeManager.Instance.currentDay;
+            plantedHour = TimeManager.Instance.currentHour;
+        }
+        // 利用随机数来产生种植成熟偏差
+        int dnaHash = Random.Range(0, 1000);
+        growthOffset = (dnaHash % 17) / 10f - 0.8f; // 浮动在 -0.8 ~ +0.9 小时之间
         currentState = TileState.Growing;
         ticksPassed = 0;
         
@@ -64,15 +78,17 @@ public class UI_PlotSlot : MonoBehaviour{
         // 只有地块里有植物，且植物还没完全成熟，才需要成长
         if (currentState != TileState.Empty && currentState != TileState.Mature)
         {
-            ticksPassed++;  // 游戏内过去1小时，等同于增长了 1个 tick
+            // 计算实际经历的绝对游戏小时数
+            int totalHoursPassed = (day - plantedDay) * 24 + (hour - plantedHour);
+            ticksPassed = totalHoursPassed;
 
             // 检查是否达到状态切换点 
             //状态逻辑切换,当同时满足状态与节拍要求时，调用切换方法
-            if (currentState == TileState.Growing && ticksPassed > targetGrowingTicks)
+            if (currentState == TileState.Growing && ticksPassed + growthOffset >= targetGrowingTicks)
             {
                 TransitionTo(TileState.Flowering);
             }
-            else if (currentState == TileState.Flowering && ticksPassed > targetFloweringTicks)
+            else if (currentState == TileState.Flowering && ticksPassed + growthOffset >= targetFloweringTicks)
             {
                 TransitionTo(TileState.Mature);
             }
