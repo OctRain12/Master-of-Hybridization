@@ -32,4 +32,6 @@ public class SpeciesData : ScriptableObject
     public int seedPrice;        // 种子价格
     public int fruitPrice;       // 果实价格
 
+    [Header("环境/基因突变进化配置")]
+public List<MutationRecipe> possibleMutations; // 该物种可能发生的变异列表
 }
