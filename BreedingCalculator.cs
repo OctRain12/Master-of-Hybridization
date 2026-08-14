@@ -4,12 +4,30 @@ using UnityEngine;
 public static class BreedingCalculator
 {
     /// <summary>
-    /// 核心计算器：传入两个植物数据，返回它们产生的下一代基因序列
+    /// 核心计算器：传入两个植物数据，返回它们产生的下一代基因序列,优先计算是否发生突变
+    /// 若发生突变则直接返回突变后的物种基因序列，否则按正常遗传逻辑计算下一代
     /// </summary>
     /// <param name="parentA">本方植物 (母本)</param>
     /// <param name="parentB">相邻植物 (父本)。如果为 null，或者与母本不同种，则触发自交</param>
     /// <returns>计算出的下一代 GenoType</returns>
-    public static GenoType CalculateNextGeneration(PlantInstanceData parentA, PlantInstanceData parentB)
+    public static SeedEntry CalculateNextGeneration(PlantInstanceData parentA, PlantInstanceData parentB)
+    {
+        // 1. 特殊环境突变检测
+        SpeciesData mutatedSpecies = MutationDatabase.Instance?.CheckMutation(
+        parentA.speciesTemplate,  
+        parentA.dna
+        );
+        if (mutatedSpecies != null)
+        {
+            // 突变为新物种，同时继承并组合亲本基因
+            GenoType inheritedDNA = NormalNextGeneration(parentA, parentB);
+            return new SeedEntry(mutatedSpecies, inheritedDNA);
+        }
+        // 2. 正常同物种杂交/自交
+        GenoType standardDNA = NormalNextGeneration(parentA, parentB);
+        return new SeedEntry(parentA.speciesTemplate, standardDNA);
+    }
+    public static GenoType NormalNextGeneration(PlantInstanceData parentA, PlantInstanceData parentB)
     {
         // 1. 处理自交/生殖隔离
         // 如果没有找到合法邻居，或者邻居不是同类，则父本设为自己（自交）

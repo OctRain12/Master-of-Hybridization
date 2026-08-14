@@ -13,7 +13,7 @@ public class UI_PlotSlot : MonoBehaviour{
     public Vector2Int gridPos;
     
     [Header("当前土坑数据")]
-    public GenoType calculatedSeed; // 存放杂交/自交后的种子基因等待收获
+    public SeedEntry? calculatedSeedEntry; // 存放杂交/自交后的种子基因等待收获（该种子基因可能会突变成别的植物，所以用SeedEntry）
     public int currentMatchPriority = 4; // 记录当前种子的匹配优先级：0:左, 1:上, 2:右, 3:下, 4:自交(默认)
     public TileState currentState = TileState.Empty;    //初始化土地状态
     public PlantInstanceData currentPlantData;          //当前持有该植物的实例数据（含基因）
@@ -114,6 +114,29 @@ public class UI_PlotSlot : MonoBehaviour{
             Debug.Log($"{currentPlantData.speciesTemplate.speciesName} 已成熟！");
         }
     }
+
+    /// <summary>
+    /// 特殊突变：将当前生长的植物当场蜕变为新物种（保留当前基因）
+    /// </summary>
+    public void MutateCurrentPlant(SpeciesData newSpecies)
+    {
+        if (currentPlantData == null || newSpecies == null) return;
+
+        Debug.Log($"🌟 [物种蜕变] 位于 {gridPos} 的 {currentPlantData.speciesTemplate.speciesName} 沐浴月光，当场蜕变为 【{newSpecies.speciesName}】！");
+
+        // 1. 保留原本的所有基因，但将物种模板彻底替换为云稻
+        currentPlantData.speciesTemplate = newSpecies;
+
+        // 2. 根据新物种重新计算后续生长所需的目标 Tick
+        targetGrowingTicks = currentPlantData.GetActualGrowingTicks();
+        targetFloweringTicks = currentPlantData.GetActualFloweringTicks();
+
+        // 3. 立即刷新贴图显示（此时就会换上云稻的开花/生长贴图！）
+        UpdateVisuals();
+        
+        // (可选) 可以在这里触发一个粒子特效或变身音效！
+    }
+
     /// <summary>
     /// 收获方法（先判断收获果实还是种子）
     /// </summary>
@@ -124,9 +147,10 @@ public class UI_PlotSlot : MonoBehaviour{
         //针对收获果实和种子的不同情况
         if (isSeedMode)
         {
-            //取走算好的种子calculatedSeed
+            //取走算好的种子calculatedSeedEntry
+            SeedEntry resultSeed = calculatedSeedEntry ?? new SeedEntry(currentPlantData.speciesTemplate, currentPlantData.dna);
             int count = currentPlantData.speciesTemplate.seedCount;
-            InventoryManager.Instance.AddSeed(currentPlantData.speciesTemplate, calculatedSeed, count);
+            InventoryManager.Instance.AddSeed(resultSeed.species, resultSeed.dna, count);
         }
         else
         {
@@ -136,7 +160,7 @@ public class UI_PlotSlot : MonoBehaviour{
         }
         //收获完成后需要将地块清空
         currentPlantData = null;
-        calculatedSeed = null;
+        calculatedSeedEntry = null;
         currentState = TileState.Empty;
         UpdateVisuals();
     }

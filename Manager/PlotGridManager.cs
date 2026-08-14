@@ -96,9 +96,20 @@ public class PlotGridManager : MonoBehaviour
     private void HandleFlowering(UI_PlotSlot requester)
     {
         if (requester == null || requester.currentPlantData == null) return;
+        
+        // 0.先检查母体是否在当前环境（如夜间）发生【活体当场突变】
+        SpeciesData mutatedSpecies = MutationDatabase.Instance?.CheckMutation(
+        requester.currentPlantData.speciesTemplate,
+        requester.currentPlantData.dna
+        );
+        if (mutatedSpecies != null)
+        {
+            // 触发突变 水稻 -> 云稻（贴图刷新、数据重写、基因保留）
+            requester.MutateCurrentPlant(mutatedSpecies);
+        }
 
-        // 1. 初始保底：给自己设置自交种子（优先级 4）
-        requester.calculatedSeed = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, null);
+        // 1. 基于蜕变后的新实体，初始保底：给自己设置自交种子（优先级 4）
+        requester.calculatedSeedEntry = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, null);
         requester.currentMatchPriority = 4;
 
         // 2. 遍历四个方向寻求匹配 (0:左, 1:上, 2:右, 3:下)
@@ -120,7 +131,7 @@ public class PlotGridManager : MonoBehaviour
                     // A. 给自己更新更优优先级的种子
                     if (i < requester.currentMatchPriority)
                     {
-                        requester.calculatedSeed = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, neighbor.currentPlantData);
+                        requester.calculatedSeedEntry = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, neighbor.currentPlantData);
                         requester.currentMatchPriority = i;
                     }
 
@@ -129,7 +140,7 @@ public class PlotGridManager : MonoBehaviour
 
                     if (myDirectionIndexForNeighbor < neighbor.currentMatchPriority)
                     {
-                        neighbor.calculatedSeed = BreedingCalculator.CalculateNextGeneration(neighbor.currentPlantData, requester.currentPlantData);
+                        neighbor.calculatedSeedEntry = BreedingCalculator.CalculateNextGeneration(neighbor.currentPlantData, requester.currentPlantData);
                         neighbor.currentMatchPriority = myDirectionIndexForNeighbor;
                         Debug.Log($"[反向匹配] 邻居 {neighbor.gridPos} 的种子被 {requester.gridPos} 更新了！新优先级: {myDirectionIndexForNeighbor}");
                     }
