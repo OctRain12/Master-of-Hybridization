@@ -41,7 +41,8 @@ public class PlotGridManager : MonoBehaviour
     {
         EventBus.OnPlantFlowering -= HandleFlowering;
     }
-/// <summary>
+    
+    /// <summary>
     /// 初始化网格：自动扫描所有子物体的 UI_PlotSlot 并绑定逻辑坐标
     /// </summary>
     public void InitGrid()

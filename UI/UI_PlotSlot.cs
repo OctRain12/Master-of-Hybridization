@@ -189,6 +189,18 @@ public class UI_PlotSlot : MonoBehaviour{
         {
             plantImage.sprite = currentSprite;
             plantImage.color = Color.white;
+
+            // 根据当前 Sprite 在编辑器里设置的真实像素 Pivot，换算为 UI 的 (0~1) 归一化 Pivot
+            Vector2 spritePivotNormalized = new Vector2(
+            currentSprite.pivot.x / currentSprite.rect.width,
+            currentSprite.pivot.y / currentSprite.rect.height
+            );
+
+        // 动态把当前 Image 的 Pivot 改为当前作物的根部，实现每种作物独立对齐！
+        plantImage.rectTransform.pivot = spritePivotNormalized;
+        
+        // 确保把图片锚点 Pos 归零在土坑阴影中心
+        plantImage.rectTransform.anchoredPosition = Vector2.zero;
             //plantImage.SetNativeSize();
         }
         else

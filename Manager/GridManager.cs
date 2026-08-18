@@ -69,8 +69,8 @@ public class GridManager : MonoBehaviour
     private void HandleFlowering(UI_PlotSlot requester)
     {
         // 1. 初始状态：先给自己设一个保底的自交种子（优先级 4）
-        requester.calculatedSeed = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, null);
-        requester.currentMatchPriority = 4; 
+        //requester.calculatedSeed = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, null);
+        //requester.currentMatchPriority = 4; 
 
         // 2. 按照优先级顺序寻找邻居 (0:左, 1:上, 2:右, 3:下)
         for (int i = 0; i < searchOrder.Length; i++)
@@ -89,7 +89,7 @@ public class GridManager : MonoBehaviour
                     // A. 更新自己的种子,按顺序找
                     if(i < requester.currentMatchPriority)
                     {
-                        requester.calculatedSeed = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, neighbor.currentPlantData);
+                        //requester.calculatedSeed = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, neighbor.currentPlantData);
                         requester.currentMatchPriority = i; // 更新匹配优先级
                     }
                     // B. [关键] 尝试更新邻居的种子(为在开花的邻居尝试更新为优先级更高的状态)
@@ -98,7 +98,7 @@ public class GridManager : MonoBehaviour
                     // 如果邻居目前的匹配优先级不如我（或者他还是自交），则强制邻居跟我杂交
                     if(myDirectionIndexForNeighbor < neighbor.currentMatchPriority)
                     {
-                        neighbor.calculatedSeed = BreedingCalculator.CalculateNextGeneration(neighbor.currentPlantData, requester.currentPlantData);
+                        // neighbor.calculatedSeed = BreedingCalculator.CalculateNextGeneration(neighbor.currentPlantData, requester.currentPlantData);
                         neighbor.currentMatchPriority = myDirectionIndexForNeighbor; // 更新邻居的匹配优先级
                         Debug.Log($"[反向匹配] 邻居 {neighbor.gridPos} 的种子被 {requester.gridPos} 更新了！新优先级: {myDirectionIndexForNeighbor}");
                     }
