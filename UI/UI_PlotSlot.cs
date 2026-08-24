@@ -6,8 +6,10 @@ using UnityEngine.EventSystems;
 
 public enum TileState{Empty,Growing,Flowering,Mature} 
 public class UI_PlotSlot : MonoBehaviour{
+    [Header("视觉组件")]
     public Image shadowImage;    // 根部阴影
     public Image plantImage;     // 植物/小芽图片
+    public Slider progressBar; // 预留：头顶或地块内部绑定的进度条 UI
 
     [Header("网格坐标 (用于数据层匹配)")]
     public Vector2Int gridPos;
@@ -19,15 +21,17 @@ public class UI_PlotSlot : MonoBehaviour{
     public PlantInstanceData currentPlantData;          //当前持有该植物的实例数据（含基因）
 
     [Header("播种时间")]    
-    public int plantedDay;
-    public int plantedHour;
     private float growthOffset; // 每个人独一无二的生长偏置（小时）
+    public float currentGrowthTimer = 0f;    // 当前已生长累计秒数
+    public float totalGrowthDuration = 0f;   // 该作物所需的总秒数
+    public float speedBuffMultiplier = 1.0f; // 道具/环境额外加速倍率（默认 1.0）
+    // 状态防重触发标记
+    private bool isFloweringTriggered = false;
     // public SpeciesData currentSpecies;
-    private int ticksPassed = 0;
     
-    // 缓存计算出的阶段时长，避免每帧重复计算
-    private int targetGrowingTicks;
-    private int targetFloweringTicks;
+
+    // 防止动画重叠播放的标记
+    private Coroutine currentGrowthAnimRoutine;
 
     // 由 PlotGridManager 初始化时调用获取坐标信息
     public void Init(Vector2Int pos)
@@ -35,15 +39,23 @@ public class UI_PlotSlot : MonoBehaviour{
         gridPos = pos;
         UpdateVisuals();
     }
+    public void Update()
+    {
+        // 只有在生长中或开花中，才执行倒计时推演
+        if (currentState == TileState.Growing || currentState == TileState.Flowering)
+        {
+            UpdateGrowth(Time.deltaTime);
+        }
+    }
     // 事件订阅与退订
     void OnEnable()
     {
-        EventBus.OnHourChanged += HandleHourlyGrowth;
+        // EventBus.OnHourChanged += HandleHourlyGrowth;
     }
 
     void OnDisable()
     {
-        EventBus.OnHourChanged -= HandleHourlyGrowth;
+        // EventBus.OnHourChanged -= HandleHourlyGrowth;
     }
     /// <summary>
     /// 播种方法：接收的是一个包含基因信息的实例数据包
@@ -53,53 +65,80 @@ public class UI_PlotSlot : MonoBehaviour{
     {
         currentPlantData = plantData;
 
-        // 预计算该植物基于基因的实际生长时长
-        targetGrowingTicks = currentPlantData.GetActualGrowingTicks();
-        targetFloweringTicks = currentPlantData.GetActualFloweringTicks();
-
-        // 记录种植时刻的时间戳
-        if (TimeManager.Instance != null)
-        {
-            plantedDay = TimeManager.Instance.currentDay;
-            plantedHour = TimeManager.Instance.currentHour;
-        }
+        // 初始化计时器
         // 利用随机数来产生种植成熟偏差
         int dnaHash = Random.Range(0, 1000);
-        growthOffset = (dnaHash % 17) / 10f - 0.8f; // 浮动在 -0.8 ~ +0.9 小时之间
+        growthOffset = (dnaHash % 17) / 10f - 0.8f; 
+        currentGrowthTimer = 0f + growthOffset; // 加上偏置时间（秒）
+        totalGrowthDuration = currentPlantData.GetActualGrowthDuration();
+        speedBuffMultiplier = 1.0f;
+        isFloweringTriggered = false;
         currentState = TileState.Growing;
-        ticksPassed = 0;
-        
-        UpdateVisuals(); // 更新视觉信息
+        UpdateVisuals(); // 刷新贴图
+        PlayPlantSeedAnimation();
         Debug.Log($"播种成功：{currentPlantData.speciesTemplate.speciesName}，基因：{currentPlantData.dna}");
     }
-    // 对应的时间监听方法
-    private void HandleHourlyGrowth(int day, int hour)
+    /// <summary>
+    /// 平滑推进生长进度
+    /// </summary>
+    private void UpdateGrowth(float deltaTime)
     {
-        // 只有地块里有植物，且植物还没完全成熟，才需要成长
-        if (currentState != TileState.Empty && currentState != TileState.Mature)
-        {
-            // 计算实际经历的绝对游戏小时数
-            int totalHoursPassed = (day - plantedDay) * 24 + (hour - plantedHour);
-            ticksPassed = totalHoursPassed;
+        if (totalGrowthDuration <= 0f) return;
 
-            // 检查是否达到状态切换点 
-            //状态逻辑切换,当同时满足状态与节拍要求时，调用切换方法
-            if (currentState == TileState.Growing && ticksPassed + growthOffset >= targetGrowingTicks)
+        // 累加时间（支持外加加速倍率）
+        currentGrowthTimer += deltaTime * speedBuffMultiplier;
+        float progress = Mathf.Clamp01(currentGrowthTimer / totalGrowthDuration);
+
+        // 1. 实时更新 UI 进度条（如果有绑定）
+        if (progressBar != null)
+        {
+            progressBar.gameObject.SetActive(true);
+            progressBar.value = progress;
+        }
+
+        // 2. 进度达到开花标准：进入开花期并触发突变/授粉
+        float flowerStageRatio = currentPlantData.speciesTemplate.flowerStageRatio; 
+        if (progress >= flowerStageRatio && !isFloweringTriggered)
+        {
+            isFloweringTriggered = true;
+            
+            // 触发开花过渡
+            PlayStageTransitionAnimation(() =>
             {
-                TransitionTo(TileState.Flowering);
-            }
-            else if (currentState == TileState.Flowering && ticksPassed + growthOffset >= targetFloweringTicks)
-            {
-                TransitionTo(TileState.Mature);
-            }
+                currentState = TileState.Flowering;
+                // 通知管理器进行环境突变与邻居授粉检测
+                TransitionTo(currentState);
+            });
+        }
+
+        // 3. 进度达到 100%：完全成熟
+        if (progress >= 1.0f && currentState != TileState.Mature)
+        {
+            currentState = TileState.Mature;
+            isFloweringTriggered = false;
+            TransitionTo(currentState);
+        }
+    
+    }
+    /// <summary>
+    /// 道具加速接口（支持化肥、加速药水直接调用）
+    /// </summary>
+    /// <param name="instantSeconds">瞬间缩短的秒数</param>
+    public void ApplyInstantGrowth(float instantSeconds)
+    {
+        if (currentState == TileState.Growing || currentState == TileState.Flowering)
+        {
+            UpdateGrowth(instantSeconds); // 模拟瞬间走过指定的秒数
         }
     }
     // 状态切换与授粉事件触发
     private void TransitionTo(TileState newState)
     {
-        currentState = newState;
-        ticksPassed = 0;
-        UpdateVisuals();
+        PlayStageTransitionAnimation(() =>
+        {
+            currentState = newState;
+            UpdateVisuals(); // 在下蹲最扁的瞬间刷新贴图
+        });
 
         if (newState == TileState.Flowering)
         {
@@ -127,11 +166,12 @@ public class UI_PlotSlot : MonoBehaviour{
         // 1. 保留原本的所有基因，但将物种模板彻底替换为云稻
         currentPlantData.speciesTemplate = newSpecies;
 
-        // 2. 根据新物种重新计算后续生长所需的目标 Tick
-        targetGrowingTicks = currentPlantData.GetActualGrowingTicks();
-        targetFloweringTicks = currentPlantData.GetActualFloweringTicks();
-
-        // 3. 立即刷新贴图显示（此时就会换上云稻的开花/生长贴图！）
+        // 2. 根据新物种重新计算后续生长所需的目标时间
+        // 重新按照开花开始计算新品种所需生长时间
+        float oldProgress = currentPlantData.speciesTemplate.flowerStageRatio;
+        totalGrowthDuration = currentPlantData.GetActualGrowthDuration();
+        currentGrowthTimer = totalGrowthDuration * oldProgress;
+        // 3. 立即刷新贴图显示（换上云稻的开花/生长贴图）
         UpdateVisuals();
         
         // (可选) 可以在这里触发一个粒子特效或变身音效！
@@ -162,6 +202,10 @@ public class UI_PlotSlot : MonoBehaviour{
         currentPlantData = null;
         calculatedSeedEntry = null;
         currentState = TileState.Empty;
+        currentGrowthTimer = 0f;
+        totalGrowthDuration = 0f;
+        // 为进度条预留
+        if (progressBar != null) progressBar.gameObject.SetActive(false);
         UpdateVisuals();
     }
     /// <summary>
@@ -214,6 +258,104 @@ public class UI_PlotSlot : MonoBehaviour{
             }
         }
     }
+
+    /// <summary>
+    /// 触发阶段切换动画（先压缩蓄力 -> 在中点切图/换数据 -> 爆发回弹）
+    /// </summary>
+    /// <param name="onSwitchAction">在中点执行的数据与贴图刷新</param>
+    public void PlayStageTransitionAnimation(System.Action onSwitchAction)
+    {
+        if (!gameObject.activeInHierarchy)
+        {
+            // 如果物体未激活，直接静默更新数据，不跑协程
+            onSwitchAction?.Invoke();
+            return;
+        }
+
+        if (currentGrowthAnimRoutine != null)
+        {
+            StopCoroutine(currentGrowthAnimRoutine);
+        }
+
+        currentGrowthAnimRoutine = StartCoroutine(StageTransitionRoutine(onSwitchAction));  
+    }
+    // 生长过渡动画协程：下蹲蓄力 -> 中点切图 -> 爆发回弹
+    private IEnumerator StageTransitionRoutine(System.Action onSwitchAction)
+    {
+        Transform t = plantImage.transform;
+        Vector3 defaultScale = Vector3.one;
+
+        // 阶段 1：下蹲挤压蓄力 (变扁变宽，持续 0.1 秒)
+        float elapsed = 0f;
+        float duration1 = 0.1f;
+        Vector3 squishScale = new Vector3(1.2f, 0.7f, 1f);
+
+        while (elapsed < duration1)
+        {
+            elapsed += Time.deltaTime;
+            t.localScale = Vector3.Lerp(defaultScale, squishScale, elapsed / duration1);
+            yield return null;
+        }
+
+        // ----------------------------------------------------
+        // 阶段 2：【中点执行】在最扁的瞬间更新贴图或物种数据
+        // ----------------------------------------------------
+        onSwitchAction?.Invoke();
+
+        // 阶段 3：向上弹起伸长 (爆发拉长，持续 0.15 秒)
+        elapsed = 0f;
+        float duration2 = 0.15f;
+        Vector3 stretchScale = new Vector3(0.85f, 1.25f, 1f);
+
+        while (elapsed < duration2)
+        {
+            elapsed += Time.deltaTime;
+            t.localScale = Vector3.Lerp(squishScale, stretchScale, elapsed / duration2);
+            yield return null;
+        }
+
+        // 阶段 4：平滑阻尼回弹到标准大小 (持续 0.1 秒)
+        elapsed = 0f;
+        float duration3 = 0.1f;
+
+        while (elapsed < duration3)
+        {
+            elapsed += Time.deltaTime;
+            t.localScale = Vector3.Lerp(stretchScale, defaultScale, elapsed / duration3);
+            yield return null;
+        }
+
+        t.localScale = defaultScale;
+        currentGrowthAnimRoutine = null;   
+    }
+    // 播种动画
+    public void PlayPlantSeedAnimation()
+    {
+        StartCoroutine(PlantSeedRoutine());
+    }
+
+    // 协程：播种时的弹性生长动画（从 0 缩放到 1.2 再回弹到 1.0）
+    private IEnumerator PlantSeedRoutine()
+    {
+        Transform t = plantImage.transform;
+        t.localScale = Vector3.zero; // 从 0 开始
+
+        float elapsed = 0f;
+        float duration = 0.25f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = elapsed / duration;
+            // 使用弹性曲线：从小瞬间弹大到 1.2，再缩回 1.0
+            float curveScale = Mathf.Sin(progress * Mathf.PI * 0.75f) * 1.2f;
+            t.localScale = new Vector3(curveScale, curveScale, 1f);
+            yield return null;
+        }
+
+        t.localScale = Vector3.one;
+    }
+
     // 根据当前状态获取对应的 Sprite 贴图
     private Sprite GetSpriteByState(SpeciesData template)
     {

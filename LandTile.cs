@@ -56,8 +56,8 @@ public class LandTile : MonoBehaviour
         currentPlantData = plantData;
 
         //预计算该植物基于基因的实际生长时长
-        targetGrowingTicks = currentPlantData.GetActualGrowingTicks();
-        targetFloweringTicks = currentPlantData.GetActualFloweringTicks();
+        //targetGrowingTicks = currentPlantData.GetActualGrowingTicks();
+        //targetFloweringTicks = currentPlantData.GetActualFloweringTicks();
 
         //作物种下更新信息
         //currentSpecies = species;

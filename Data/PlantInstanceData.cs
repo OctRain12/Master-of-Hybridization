@@ -17,20 +17,25 @@ public class PlantInstanceData
     // 动态计算：表现型 = 模板基础值 * 基因加成
     // ==========================================
 
-    // 计算实际需要的生长时间 (Tick 数)
-    public int GetActualGrowingTicks()
+    // 计算实际需要的生长时间 (以基准时间为准)
+    /// <summary>
+    /// 计算该植株受基因影响后的实际总生长周期（秒）
+    /// </summary>
+    public float GetActualGrowthDuration()
     {
+        if (speciesTemplate == null) return 30f; // 缺省默认 30 秒
+        float baseDuration = speciesTemplate.baseGrowthDuration;
         // 获取基础时间，乘以基因带来的减免，然后四舍五入
-        float calcTicks = speciesTemplate.growingTicks * dna.GetSpeedModifier();
-        return Mathf.RoundToInt(calcTicks);
+        float calcDuration = speciesTemplate.baseGrowthDuration * dna.GetSpeedModifier();
+        return calcDuration;
     }
-    // 计算实际的授粉期时长 (假设授粉期也受速度基因影响，或者你可以让它固定)
-    public int GetActualFloweringTicks()
+    // 计算实际的授粉期时长 (假设授粉期也受速度基因影响)
+    /* public float GetActualFloweringDuration()
     {
-        float calcTicks = speciesTemplate.flowerTicks * dna.GetSpeedModifier();
-        // 保证授粉期最短也得有 1 个 Tick，不然错过了就尴尬了
-        return Mathf.Max(1, Mathf.RoundToInt(calcTicks));
-    }
+        float calcDuration = speciesTemplate.flowerStageRatio * dna.GetSpeedModifier();
+        // 保证授粉期最短也得有 1 个 Tick，防止错过
+        return Mathf.Max(0.1f, calcDuration);
+    }*/
     // 计算成熟后实际产出的果实/作物数量
     public int GetActualHarvestQuantity()
     {

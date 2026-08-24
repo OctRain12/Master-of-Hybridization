@@ -12,7 +12,7 @@ public static class BreedingCalculator
     /// <returns>计算出的下一代 GenoType</returns>
     public static SeedEntry CalculateNextGeneration(PlantInstanceData parentA, PlantInstanceData parentB)
     {
-        // 1. 特殊环境突变检测
+        // 特殊环境突变检测
         SpeciesData mutatedSpecies = MutationDatabase.Instance?.CheckMutation(
         parentA.speciesTemplate,  
         parentA.dna
@@ -23,7 +23,21 @@ public static class BreedingCalculator
             GenoType inheritedDNA = NormalNextGeneration(parentA, parentB);
             return new SeedEntry(mutatedSpecies, inheritedDNA);
         }
-        // 2. 正常同物种杂交/自交
+        // 跨物种杂交检测
+        if (parentB != null && parentB.speciesTemplate != parentA.speciesTemplate)
+        {
+            SpeciesData hybridSpecies = HybridDatabase.Instance?.TryGetHybridResult(
+            parentA.speciesTemplate, 
+            parentB.speciesTemplate
+        );
+            if (hybridSpecies != null)
+            {
+                // 跨物种杂交成功，返回杂交后新物种的基因序列
+                GenoType hybridDNA = NormalNextGeneration(parentA, parentB);
+                return new SeedEntry(hybridSpecies, hybridDNA);
+            }
+        }
+        // 正常同物种杂交/自交
         GenoType standardDNA = NormalNextGeneration(parentA, parentB);
         return new SeedEntry(parentA.speciesTemplate, standardDNA);
     }

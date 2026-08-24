@@ -8,9 +8,13 @@ using UnityEngine;
 public class SpeciesData : ScriptableObject
 {
     public string speciesName;
-    [Header("生长阶段计数")]
-    public int growingTicks;
-    public int flowerTicks;
+
+    [Header("基准生长时间与阶段比例")]
+
+    public float baseGrowthDuration; // 基础生长时间，单位为秒
+    // public float growthStageRatio;   // 生长阶段比例，0-1之间的
+    public float flowerStageRatio;   // 开花阶段比例，0-1之间的
+    // public float matureStageRatio;   // 成熟阶段比例，0-1之间的
     public GenoType defaultGenoType;
     [Header("产量设置")]
     public int seedCount;                  //这株植物的种子产量，默认4
