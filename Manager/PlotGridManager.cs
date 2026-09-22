@@ -109,9 +109,9 @@ public class PlotGridManager : MonoBehaviour
             requester.MutateCurrentPlant(mutatedSpecies);
         }
 
-        // 1. 基于蜕变后的新实体，初始保底：给自己设置自交种子（优先级 4）
+        // 1. 基于蜕变后的新实体，初始保底：给自己设置自交种子（优先级 defaultCurrentMatchPriority）
         requester.calculatedSeedEntry = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, null);
-        requester.currentMatchPriority = 4;
+        requester.currentMatchPriority = requester.defaultCurrentMatchPriority;
 
         // 2. 遍历四个方向寻求匹配 (0:左, 1:上, 2:右, 3:下)
         for (int i = 0; i < searchOrder.Length; i++)
@@ -124,16 +124,32 @@ public class PlotGridManager : MonoBehaviour
             {
                 UI_PlotSlot neighbor = plotDictionary[targetPos];
 
-                // 判定条件：邻居存在、正在开花、且是同物种（或允许杂交的物种）
-                if (neighbor.currentState == TileState.Flowering &&
-                    neighbor.currentPlantData != null &&
-                    neighbor.currentPlantData.speciesTemplate == requester.currentPlantData.speciesTemplate)
+                // 邻居基础校验：存在且处于开花期
+                if (neighbor.currentState != TileState.Flowering || neighbor.currentPlantData == null) continue;
+                // 邻居和自身物种数据
+                SpeciesData mySpecies = requester.currentPlantData.speciesTemplate;
+                SpeciesData neighborSpecies = neighbor.currentPlantData.speciesTemplate;
+
+                // 判断条件
+                bool isSameSpecies = (mySpecies == neighborSpecies);
+                bool canHybridize = false;
+                // 仅在异种时查询杂交表（避免同种重复查询）
+                if (!isSameSpecies)
                 {
+                    canHybridize = (HybridDatabase.Instance?.TryGetHybridResult(mySpecies, neighborSpecies) != null);
+                }
+                // 只有“同物种”或者“能杂交的异种”才具备匹配资格
+                if (isSameSpecies || canHybridize)
+                {
+                    // 分段权重：跨物种(0~3) 绝对优先于 同物种(10~13)
+                    int priorityOffset = canHybridize ? 0 : 10;
+                    int currentActionPriority = priorityOffset + i;
+
                     // A. 给自己更新更优优先级的种子
-                    if (i < requester.currentMatchPriority)
+                    if (currentActionPriority < requester.currentMatchPriority)
                     {
                         requester.calculatedSeedEntry = BreedingCalculator.CalculateNextGeneration(requester.currentPlantData, neighbor.currentPlantData);
-                        requester.currentMatchPriority = i;
+                        requester.currentMatchPriority = currentActionPriority;
                     }
 
                     // B. [关键反向匹配] 尝试更新邻居的种子

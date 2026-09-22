@@ -2,6 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using Microsoft.Unity.VisualStudio.Editor;
 using UnityEngine;
+public enum ShopUnlockType
+{
+    DefaultUnlocked,      // 默认解锁
+    RequireEncyclopedia,  // 需点亮图鉴
+    RequireFruitSold      // 需累计售卖果实
+}
 
 //创建物种建立菜单
 [CreateAssetMenu(fileName ="NewSpecies", menuName = "BreedingGame/SpeciesData")]
@@ -35,7 +41,11 @@ public class SpeciesData : ScriptableObject
     [Header("价格设置")]
     public int seedPrice;        // 种子价格
     public int fruitPrice;       // 果实价格
+    
+    [Header("商店解锁配置")]
+    public ShopUnlockType unlockType = ShopUnlockType.DefaultUnlocked;
+    public int unlockThreshold = 0; // 当类型为 RequireFruitSold 时，此为目标数量
 
     [Header("环境/基因突变进化配置")]
-public List<MutationRecipe> possibleMutations; // 该物种可能发生的变异列表
+    public List<MutationRecipe> possibleMutations; // 该物种可能发生的变异列表
 }

@@ -33,6 +33,7 @@ public static class BreedingCalculator
             if (hybridSpecies != null)
             {
                 // 跨物种杂交成功，返回杂交后新物种的基因序列
+                Debug.Log($"杂交成功：{parentA.speciesTemplate.speciesName} + {parentB.speciesTemplate.speciesName} -> {hybridSpecies.speciesName}");
                 GenoType hybridDNA = NormalNextGeneration(parentA, parentB);
                 return new SeedEntry(hybridSpecies, hybridDNA);
             }

@@ -11,8 +11,8 @@ public enum ItemCategory
 
 public class InventoryManager : MonoBehaviour
 {
-    [Header("经济系统")]
-    public int currentGold = 100; // 初始金币
+    //[Header("经济系统")]
+    //public int currentGold = 100; // 初始金币
     [Header("快捷栏数据 (固定6个槽位)")]
     public int hotbarSize = 6;
     public List<HotbarSlotData> hotbarSlots = new List<HotbarSlotData>();
@@ -32,6 +32,8 @@ public class InventoryManager : MonoBehaviour
 
     //刷新背包的事件
     public static event Action OnInventoryChanged;
+
+    public int GetFruitCount(SpeciesData species) => fruitInventory.GetValueOrDefault(species, 0);
 
     //初始化赋值
     void Awake()
@@ -123,7 +125,7 @@ public class InventoryManager : MonoBehaviour
         return "";
     }
     // 购买种子或卖出果实时调用
-    public bool ModifyGold(int amount)
+    /*public bool ModifyGold(int amount)
     {
         if(currentGold + amount < 0)
         {
@@ -133,7 +135,7 @@ public class InventoryManager : MonoBehaviour
         currentGold += amount;
         OnInventoryChanged?.Invoke(); // 金币变了也属于背包/仓库数据变动，触发UI刷新
         return true; // 交易成功
-    }
+    }*/
     /// <summary>
     /// 检查并扣除指定数量的果实（用于完成订单）
     /// </summary>

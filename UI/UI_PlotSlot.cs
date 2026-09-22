@@ -16,7 +16,8 @@ public class UI_PlotSlot : MonoBehaviour{
     
     [Header("当前土坑数据")]
     public SeedEntry? calculatedSeedEntry; // 存放杂交/自交后的种子基因等待收获（该种子基因可能会突变成别的植物，所以用SeedEntry）
-    public int currentMatchPriority = 4; // 记录当前种子的匹配优先级：0:左, 1:上, 2:右, 3:下, 4:自交(默认)
+    public int defaultCurrentMatchPriority = 99; // 存放自交的种子基因等待收获（该种子基因可能会突变成别的植物，所以用SeedEntry）
+    public int currentMatchPriority = 99; // 记录当前种子的匹配优先级：0:左, 1:上, 2:右, 3:下, 4:自交(默认)
     public TileState currentState = TileState.Empty;    //初始化土地状态
     public PlantInstanceData currentPlantData;          //当前持有该植物的实例数据（含基因）
 
@@ -142,7 +143,7 @@ public class UI_PlotSlot : MonoBehaviour{
 
         if (newState == TileState.Flowering)
         {
-            currentMatchPriority = 4; // 每次开花重置优先级
+            currentMatchPriority = defaultCurrentMatchPriority; // 每次开花重置优先级
             Debug.Log($"{currentPlantData.speciesTemplate.speciesName} 在 {gridPos} 发起授粉请求");
             
             // 触发开花授粉事件，把当前 UI_PlotSlot 传递给杂交计算器
@@ -163,7 +164,7 @@ public class UI_PlotSlot : MonoBehaviour{
 
         Debug.Log($"🌟 [物种蜕变] 位于 {gridPos} 的 {currentPlantData.speciesTemplate.speciesName} 沐浴月光，当场蜕变为 【{newSpecies.speciesName}】！");
 
-        // 1. 保留原本的所有基因，但将物种模板彻底替换为云稻
+        // 1. 保留原本的所有基因，但将物种模板彻底替换为新突变
         currentPlantData.speciesTemplate = newSpecies;
 
         // 2. 根据新物种重新计算后续生长所需的目标时间
@@ -283,12 +284,12 @@ public class UI_PlotSlot : MonoBehaviour{
     private IEnumerator StageTransitionRoutine(System.Action onSwitchAction)
     {
         Transform t = plantImage.transform;
-        Vector3 defaultScale = Vector3.one;
+        Vector3 defaultScale = new Vector3(0.6f, 1f, 1f);
 
         // 阶段 1：下蹲挤压蓄力 (变扁变宽，持续 0.1 秒)
         float elapsed = 0f;
         float duration1 = 0.1f;
-        Vector3 squishScale = new Vector3(1.2f, 0.7f, 1f);
+        Vector3 squishScale = new Vector3(1f, 0.7f, 1f);
 
         while (elapsed < duration1)
         {
@@ -305,7 +306,7 @@ public class UI_PlotSlot : MonoBehaviour{
         // 阶段 3：向上弹起伸长 (爆发拉长，持续 0.15 秒)
         elapsed = 0f;
         float duration2 = 0.15f;
-        Vector3 stretchScale = new Vector3(0.85f, 1.25f, 1f);
+        Vector3 stretchScale = new Vector3(0.85f, 1.05f, 1f);
 
         while (elapsed < duration2)
         {
@@ -349,11 +350,11 @@ public class UI_PlotSlot : MonoBehaviour{
             float progress = elapsed / duration;
             // 使用弹性曲线：从小瞬间弹大到 1.2，再缩回 1.0
             float curveScale = Mathf.Sin(progress * Mathf.PI * 0.75f) * 1.2f;
-            t.localScale = new Vector3(curveScale, curveScale, 1f);
+            t.localScale = new Vector3(curveScale * 0.9f, curveScale, 1f);
             yield return null;
         }
 
-        t.localScale = Vector3.one;
+        t.localScale = new Vector3(0.6f, 1f, 1f); // 确保最终回到标准大小
     }
 
     // 根据当前状态获取对应的 Sprite 贴图

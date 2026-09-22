@@ -21,6 +21,8 @@ public class TimeManager : MonoBehaviour
     // 提供给全局的只读快捷属性
     //public bool IsDay => currentPhase == DayPhase.Day;
     public bool IsNight => currentPhase == DayPhase.Night;
+
+    public bool IsDay => currentPhase == DayPhase.Day;
     public static TimeManager Instance;
 
     private void Awake()

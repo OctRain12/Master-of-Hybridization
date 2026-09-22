@@ -10,7 +10,11 @@ public class UI_FruitShopSlot : MonoBehaviour, IPointerClickHandler
     public Image itemIcon;
     public TextMeshProUGUI itemNameText;
     public TextMeshProUGUI itemPriceText;
+    public TextMeshProUGUI itemAmountText; // 显示当前拥有数量
     public bool isEmpty = true;
+    [Header("多选状态UI")]
+    public GameObject selectedHighlight; // 高亮边框
+    public TextMeshProUGUI stagedAmountText; // 角标：展示当前准备卖多少个
     private SpeciesData fruitData;
     //private string fruitName;
     private int fruitAmount;
@@ -27,6 +31,19 @@ public class UI_FruitShopSlot : MonoBehaviour, IPointerClickHandler
         itemIcon.sprite = data.speciesFruitIcon;
         itemNameText.text = data.speciesName;
         itemPriceText.text = $"{data.fruitPrice}"; // 显示单价和数量
+        itemAmountText.text = fruitAmount.ToString(); // 显示当前拥有数量
+        // 查询该果实是否在暂存池中
+        if (window.GetPendingSaleAmount(data) > 0)
+        {
+            selectedHighlight.SetActive(true);
+            stagedAmountText.gameObject.SetActive(true);
+            stagedAmountText.text = $"{window.GetPendingSaleAmount(data)}";
+        }
+        else
+        {
+            selectedHighlight.SetActive(false);
+            stagedAmountText.gameObject.SetActive(false);
+        }
     }
     public void ClearSlot()
     {
@@ -43,7 +60,6 @@ public class UI_FruitShopSlot : MonoBehaviour, IPointerClickHandler
     {
         if (isEmpty)
         {
-            Debug.Log("[商店] 点击了空的果实格子，没有任何操作。");
             return; // 如果格子为空，则不执行任何操作
         }
         Debug.Log($"[商店] 点击果实格子：{fruitData.speciesName}，数量：{fruitAmount}");

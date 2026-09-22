@@ -7,14 +7,6 @@ using System.Linq;
 
 public class UI_MerchantWindow : MonoBehaviour
 {
-    [System.Serializable]
-    // 预设种子商品结构体
-    public struct PresetSeedGoods
-    {
-        public SpeciesData species;
-        public int buyPrice;
-    }
-
     [Header("页面容器引用")]
     public GameObject merchantPanel;
     public GameObject seedShopPage;
@@ -30,10 +22,17 @@ public class UI_MerchantWindow : MonoBehaviour
     public TextMeshProUGUI popupPriceText;
     public TMP_InputField popupQuantityInput;
 
-    [Header("商品种子配置")]
-    public List<PresetSeedGoods> availableSeeds = new List<PresetSeedGoods>();
-    [Tooltip("果实的统一基础收购价格配置")]
-    public int defaultFruitSellPrice = 15;
+    
+    [Header("商店数据库")]
+    public ShopDatabase shopDatabase;
+
+    [Header("果实动态格子配置")]
+    public GameObject fruitSlotPrefab; // 拖入 UI_FruitShopSlot 的 Prefab
+    private List<UI_FruitShopSlot> spawnedFruitSlots = new List<UI_FruitShopSlot>();
+
+    [Header("果实批量出售组件")]
+    public TextMeshProUGUI totalRevenueText; // 底部栏总价文本
+    public Button batchSellConfirmBtn;       // 底部栏出售按钮  
 
     // 商店专属的格子的数组
     private UI_SeedShopSlot[] seedSlots;
@@ -42,12 +41,14 @@ public class UI_MerchantWindow : MonoBehaviour
     private ItemCategory currentShopTab = ItemCategory.Seed;
     // 当前正在弹窗交易的目标
     private bool isPopupForSeed = true; // true=买种子, false=卖果实
-    private PresetSeedGoods currentSelectedSeed;
+    private ShopDatabase.PresetSeedGoods currentSelectedSeed;
     private SpeciesData currentSelectedFruit;
     private int currentItemPrice;
     private int currentQuantity = 1;
     private int maxQuantityLimit = 99;
-
+    
+    // 批量出售暂存池：<物种数据, 准备卖出的数量>
+    private Dictionary<SpeciesData, int> pendingFruitSales = new Dictionary<SpeciesData, int>();
     void Awake()
     {
         // 游戏启动时一次性抓取两个页面的所有格子
@@ -60,6 +61,8 @@ public class UI_MerchantWindow : MonoBehaviour
     if (popupQuantityInput != null)
     {
         popupQuantityInput.onValueChanged.AddListener(OnInputQuantityChanged);
+        // 新增：当玩家输入完毕点击回车或点击空白处时，纠偏文本
+        popupQuantityInput.onEndEdit.AddListener(OnInputEndEdit);
     }
 }
     void OnEnable()
@@ -95,11 +98,17 @@ public class UI_MerchantWindow : MonoBehaviour
     // 渲染种子商品页
     private void DrawSeedShop()
     {
+        // 读取数据库里的列表，而不是 UI 自身的列表
+        var seedList = shopDatabase.availableSeeds;
+
         for (int i = 0; i < seedSlots.Length; i++)
         {
-            if (i < availableSeeds.Count)
+            if (i < seedList.Count)
             {
-                seedSlots[i].Init(availableSeeds[i], this);
+                // 校验是否解锁
+                var unlockState = ShopUnlockModule.GetUnlockState(seedList[i].species);
+                seedSlots[i].Init(seedList[i], this, unlockState); // 把解锁状态传给格子
+                seedSlots[i].gameObject.SetActive(true);
             }
             else
             {
@@ -110,23 +119,31 @@ public class UI_MerchantWindow : MonoBehaviour
     // 渲染果实商品页
     private void DrawFruitShop()
     {
-        var fruitList = InventoryManager.Instance.fruitInventory.ToList();
-
-        for (int i = 0; i < fruitSlots.Length; i++)
+        var fruitDict = InventoryManager.Instance.fruitInventory; // 获取只包含数量>0的字典
+        var fruitList = fruitDict.ToList();
+        // 1. 扩充不足的格子
+        while (spawnedFruitSlots.Count < fruitList.Count)
         {
-            if (i < fruitList.Count)
-            {
-                var pair = fruitList[i];
-                fruitSlots[i].Refresh(pair.Key, pair.Value, this);
-            }
-            else
-            {
-                fruitSlots[i].ClearSlot();
-            }
+            GameObject newSlotObj = Instantiate(fruitSlotPrefab, fruitGridContext);
+            UI_FruitShopSlot slot = newSlotObj.GetComponent<UI_FruitShopSlot>();
+            spawnedFruitSlots.Add(slot);
+        }
+        // 2. 刷新有效数据
+        for (int i = 0; i < fruitList.Count; i++)
+        {
+            spawnedFruitSlots[i].gameObject.SetActive(true);
+            spawnedFruitSlots[i].Refresh(fruitList[i].Key, fruitList[i].Value, this);
+        }
+        // 3. 隐藏多余的已实例化格子（循环复用，不频繁 Destroy）
+        for (int i = fruitList.Count; i < spawnedFruitSlots.Count; i++)
+        {
+            spawnedFruitSlots[i].gameObject.SetActive(false);
         }
     }
+
+
     // --- 核心弹窗触发接口（提供给专属Slot调用） ---
-    public void OpenPopupForSeed(PresetSeedGoods seedGoods)
+    public void OpenPopupForSeed(ShopDatabase.PresetSeedGoods seedGoods)
     {
         isPopupForSeed = true;
         currentSelectedSeed = seedGoods;
@@ -175,6 +192,11 @@ public class UI_MerchantWindow : MonoBehaviour
         // 刷新价格显示（注意：不要在 OnInputQuantityChanged 内部再重新赋值 popupQuantityInput.text，否则光标会跳）
         UpdatePriceDisplay();
     }
+    private void OnInputEndEdit(string input)
+    {
+        // 强制将输入框文本重置为合法的数字，防止玩家留下 99999
+        popupQuantityInput.text = currentQuantity.ToString();
+    }
 
     // 统一价格刷新逻辑
     private void UpdatePriceDisplay()
@@ -204,30 +226,121 @@ public class UI_MerchantWindow : MonoBehaviour
     public void OnConfirmClick()
     {
         int totalPrice = currentItemPrice * currentQuantity;
-
+        Debug.Log($"[商店] 确认交易：{(isPopupForSeed ? "买种子" : "卖果实")} x{currentQuantity}，总价 {totalPrice}");
         if (isPopupForSeed)
         {
             // 买种子逻辑：扣玩家钱，给玩家发货基础基因种子
-            if (InventoryManager.Instance.ModifyGold(-totalPrice))
+            if (WalletManager.Instance.TrySpend(totalPrice))
             {
-                // 商店购买的种子统一发放基础杂合 DNA？？
+                // 商店购买的种子统一发放基础杂合 DNA
                 GenoType baseDNA = new GenoType("Aa", "Bb", "Cc");
                 InventoryManager.Instance.AddSeed(currentSelectedSeed.species, baseDNA, currentQuantity);
+                
+                // purchasePopupPanel.SetActive(false);
                 Debug.Log($"[商店] 成功购买 {currentSelectedSeed.species.speciesName} 种子 x{currentQuantity}");
             }
+            // Debug.Log($"[商店] 购买失败，余额不足。当前金币：{WalletManager.Instance.GetGold()}，所需金币：{totalPrice}");
         }
+        
         else
         {
-            // 卖果实逻辑：收走玩家果实，给玩家加钱
-            if (InventoryManager.Instance.RemoveFruit(currentSelectedFruit, currentQuantity))
-            {
-                InventoryManager.Instance.ModifyGold(totalPrice);
-                Debug.Log($"[商店] 成功卖出 {currentSelectedFruit.speciesName} 果实 x{currentQuantity}，收入 {totalPrice}");
-            }
+            // 记录批量售卖数据，而不是直接卖出
+            StagePendingSale(currentSelectedFruit, currentQuantity);
+        
         }
         // 关闭弹窗并刷新商店 UI
         purchasePopupPanel.SetActive(false);
         RefreshShopUI();
+    }
+    // 果实批量售卖核心
+    public void StagePendingSale(SpeciesData species, int amount)
+    {
+        if (amount <= 0)
+            pendingFruitSales.Remove(species);
+        else
+            pendingFruitSales[species] = amount;
+
+        UpdateBatchBottomBar();
+    }
+    /// <summary>
+    /// 查询某个果实当前在草稿池里准备卖多少。
+    /// 不在草稿池里则返回 0。
+    /// </summary>
+    public int GetPendingSaleAmount(SpeciesData species)
+    {
+        return pendingFruitSales.TryGetValue(species, out int amount) ? amount : 0;
+    }
+
+    /// <summary>
+    /// 是否在草稿池里
+    /// </summary>
+    public bool IsPendingSale(SpeciesData species)
+    {
+        return pendingFruitSales.ContainsKey(species);
+    }
+    // 底部栏总价刷新
+    public void UpdateBatchBottomBar()
+    {
+        int totalEstimatedGold = 0;
+        foreach (var pair in pendingFruitSales)
+        {
+            totalEstimatedGold += pair.Key.fruitPrice * pair.Value;
+        }
+
+        totalRevenueText.text = totalEstimatedGold.ToString();     // 更新总价文本
+        batchSellConfirmBtn.interactable = pendingFruitSales.Count > 0; // 设置按钮是否可点
+    }
+
+    public void CommitBatchSale()
+    {
+        if (pendingFruitSales.Count == 0) return;   // 没有待售物品则直接返回
+
+        int totalRevenue = 0;
+        // 计算总收入
+        foreach (var pair in pendingFruitSales)
+        {
+            {
+            if (InventoryManager.Instance.GetFruitCount(pair.Key) < pair.Value)
+                return; // 任何一条不够，整笔取消
+}
+ 
+        }
+
+        foreach (var pair in pendingFruitSales)
+        {
+            InventoryManager.Instance.RemoveFruit(pair.Key, pair.Value);
+            totalRevenue += pair.Key.fruitPrice * pair.Value;
+        }
+        WalletManager.Instance.AddGold(totalRevenue);
+        // 清空暂存池并刷新 UI
+        pendingFruitSales.Clear();
+        UpdateBatchBottomBar();
+        RefreshShopUI();
+    }
+    /// <summary>
+    /// 绑定给果实出售页底部的 "一键全选" 按钮
+    /// </summary>
+    public void OnSelectAllFruitsClick()
+    {
+        // 获取背包中所有的果实数据
+        // var allFruits = InventoryManager.Instance.fruitInventory;
+        var allFruits = InventoryManager.Instance.fruitInventory;
+        if (allFruits == null || allFruits.Count == 0) return;
+        // if (pendingFruitSales.Count == 0) return;
+
+        // 将所有果实按最大数量压入待售卖池
+        foreach (var pair in allFruits)
+        {
+            if (pair.Value > 0)
+            {
+                pendingFruitSales[pair.Key] = pair.Value;
+            }
+            // pair.Key = SpeciesData, pair.Value = 拥有数量
+            // pendingFruitSales[pair.Key] = pair.Value;
+        }
+
+        UpdateBatchBottomBar();
+        RefreshShopUI(); // 刷新全部格子的选中高亮状态
     }
     public void OnCancelClick()
     {

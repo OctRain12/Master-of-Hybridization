@@ -20,4 +20,5 @@ public class MutationRecipe
     public bool requireNight = false;         // 是否需要夜间 (20点~次日4点)
     public bool requireRain = false;          // 是否需要下雨
     public string requiredMutationGene = "";  // 是否需要携带特定基因插槽 (如 "SS")
+    public bool requireDay = false;           // 是否需要白天 (5点~19点)
 }
