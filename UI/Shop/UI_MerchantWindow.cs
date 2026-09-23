@@ -26,17 +26,19 @@ public class UI_MerchantWindow : MonoBehaviour
     [Header("商店数据库")]
     public ShopDatabase shopDatabase;
 
-    [Header("果实动态格子配置")]
+    [Header("种子与果实动态格子配置")]
+    public GameObject seedSlotPrefab;  // 拖入 UI_SeedShopSlot 的 Prefab
     public GameObject fruitSlotPrefab; // 拖入 UI_FruitShopSlot 的 Prefab
     private List<UI_FruitShopSlot> spawnedFruitSlots = new List<UI_FruitShopSlot>();
+    private List<UI_SeedShopSlot> seedSlots = new List<UI_SeedShopSlot>(); // 拖入的种子格子数组
 
     [Header("果实批量出售组件")]
     public TextMeshProUGUI totalRevenueText; // 底部栏总价文本
     public Button batchSellConfirmBtn;       // 底部栏出售按钮  
 
     // 商店专属的格子的数组
-    private UI_SeedShopSlot[] seedSlots;
-    private UI_FruitShopSlot[] fruitSlots;
+    // private UI_SeedShopSlot[] seedSlots;
+    // private UI_FruitShopSlot[] fruitSlots;   // 已切换为自动获取
     // 内部状态控制
     private ItemCategory currentShopTab = ItemCategory.Seed;
     // 当前正在弹窗交易的目标
@@ -52,8 +54,8 @@ public class UI_MerchantWindow : MonoBehaviour
     void Awake()
     {
         // 游戏启动时一次性抓取两个页面的所有格子
-        seedSlots = seedGridContext.GetComponentsInChildren<UI_SeedShopSlot>();
-        fruitSlots = fruitGridContext.GetComponentsInChildren<UI_FruitShopSlot>();
+        // seedSlots = seedGridContext.GetComponentsInChildren<UI_SeedShopSlot>();
+        // fruitSlots = fruitGridContext.GetComponentsInChildren<UI_FruitShopSlot>();
     }
     void Start()
 {
@@ -100,10 +102,20 @@ public class UI_MerchantWindow : MonoBehaviour
     {
         // 读取数据库里的列表，而不是 UI 自身的列表
         var seedList = shopDatabase.availableSeeds;
-
-        for (int i = 0; i < seedSlots.Length; i++)
+        while (seedSlots.Count < seedList.Count)
         {
-            if (i < seedList.Count)
+            GameObject newSlotObj = Instantiate(seedSlotPrefab, seedGridContext);
+            UI_SeedShopSlot slot = newSlotObj.GetComponent<UI_SeedShopSlot>();
+            seedSlots.Add(slot);
+        }
+        for (int i = 0; i < seedList.Count; i++)
+        {
+            seedSlots[i].gameObject.SetActive(true);
+            //seedSlots[i].Refresh(seedList[i], this);
+        }
+        for (int i = 0; i < seedSlots.Count; i++)
+        {
+            if (i < seedSlots.Count)
             {
                 // 校验是否解锁
                 var unlockState = ShopUnlockModule.GetUnlockState(seedList[i].species);

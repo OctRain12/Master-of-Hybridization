@@ -22,7 +22,7 @@ public static class ShopUnlockModule
             case ShopUnlockType.RequireEncyclopedia:
                 // 伪代码：对接图鉴系统
                 // state.isUnlocked = EncyclopediaManager.Instance.IsDiscovered(species);
-                state.isUnlocked = true; // 暂代
+                state.isUnlocked = false; // 暂代
                 if (!state.isUnlocked) state.lockReason = "图鉴尚未收录";
                 break;
 
