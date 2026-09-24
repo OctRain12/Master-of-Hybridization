@@ -39,10 +39,10 @@ public class UI_GoldDisplay : MonoBehaviour
             goldText.text = WalletManager.Instance.GetGold().ToString();
 
             // 金币变化 → 刷新文本
-            WalletManager.Instance.OnGoldChanged += UpdateGoldText;
+            WalletManager.OnGoldChanged += UpdateGoldText;
 
             // 金币不足 → 播放警告动画
-            WalletManager.Instance.OnInsufficientFunds += TriggerWarning;
+            WalletManager.OnInsufficientFunds += TriggerWarning;
         }
     }
         private void OnDisable()
@@ -50,8 +50,8 @@ public class UI_GoldDisplay : MonoBehaviour
         // 面板禁用时取消订阅
         if (WalletManager.Instance != null)
         {
-            WalletManager.Instance.OnGoldChanged -= UpdateGoldText;
-            WalletManager.Instance.OnInsufficientFunds -= TriggerWarning;
+            WalletManager.OnGoldChanged -= UpdateGoldText;
+            WalletManager.OnInsufficientFunds -= TriggerWarning;
         }
     }
     /// <summary>

@@ -58,6 +58,11 @@ public class UI_SeedShopSlot : MonoBehaviour, IPointerClickHandler
     public void OnPointerClick(PointerEventData eventData)
     {
         Debug.Log($"[商店] 点击种子格子：{currentItemData.species.speciesName}");
+        if (!isUnlocked)
+        {
+            Debug.Log($"[商店] 种子未解锁，无法购买。解锁条件: {lockedReasonText.text}");
+            return; // 未解锁，直接返回
+        }
         merchantWindow.OpenPopupForSeed(currentItemData);
     }
 }

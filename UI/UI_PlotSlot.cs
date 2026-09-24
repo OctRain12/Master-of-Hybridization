@@ -243,10 +243,10 @@ public class UI_PlotSlot : MonoBehaviour{
             );
 
         // 动态把当前 Image 的 Pivot 改为当前作物的根部，实现每种作物独立对齐！
-        plantImage.rectTransform.pivot = spritePivotNormalized;
+         plantImage.rectTransform.pivot = spritePivotNormalized;
         
         // 确保把图片锚点 Pos 归零在土坑阴影中心
-        plantImage.rectTransform.anchoredPosition = Vector2.zero;
+         plantImage.rectTransform.anchoredPosition = Vector2.zero;
             //plantImage.SetNativeSize();
         }
         else
@@ -285,7 +285,7 @@ public class UI_PlotSlot : MonoBehaviour{
     private IEnumerator StageTransitionRoutine(System.Action onSwitchAction)
     {
         Transform t = plantImage.transform;
-        Vector3 defaultScale = new Vector3(0.6f, 1f, 1f);
+        Vector3 defaultScale = new Vector3(1f, 1f, 1f);
 
         // 阶段 1：下蹲挤压蓄力 (变扁变宽，持续 0.1 秒)
         float elapsed = 0f;
@@ -307,7 +307,7 @@ public class UI_PlotSlot : MonoBehaviour{
         // 阶段 3：向上弹起伸长 (爆发拉长，持续 0.15 秒)
         elapsed = 0f;
         float duration2 = 0.15f;
-        Vector3 stretchScale = new Vector3(0.85f, 1.05f, 1f);
+        Vector3 stretchScale = new Vector3(0.85f, 1.15f, 1f);
 
         while (elapsed < duration2)
         {
@@ -355,7 +355,7 @@ public class UI_PlotSlot : MonoBehaviour{
             yield return null;
         }
 
-        t.localScale = new Vector3(0.6f, 1f, 1f); // 确保最终回到标准大小
+        t.localScale = new Vector3(1f, 1f, 1f); // 确保最终回到标准大小
     }
 
     // 根据当前状态获取对应的 Sprite 贴图

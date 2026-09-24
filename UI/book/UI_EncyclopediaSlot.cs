@@ -21,7 +21,7 @@ public class UI_EncyclopediaSlot : MonoBehaviour, IPointerClickHandler
         bool isDiscovered = EncyclopediaManager.Instance.IsDiscovered(species);
         bool isPerfected = EncyclopediaManager.Instance.IsPerfected(species);
 
-        plantIcon.sprite = species.speciesFruitIcon; // 使用果实或植株图标
+        plantIcon.sprite = species.matureSprite; // 使用果实或植株图标
         speciesName.text = species.speciesName;
 
         if (isDiscovered)

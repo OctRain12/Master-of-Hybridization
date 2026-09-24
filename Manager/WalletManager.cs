@@ -6,9 +6,9 @@ public class WalletManager : MonoBehaviour
     public static WalletManager Instance { get; private set; }
     [SerializeField] private int currentGold = 10; // 初始金币数量
     // 事件：金币变动 (当前总额, 变动差值)
-    public event Action<int, int> OnGoldChanged;
+    public static event Action<int, int> OnGoldChanged;
     // 事件：余额不足警报
-    public event Action OnInsufficientFunds;
+    public static event Action OnInsufficientFunds;
     private void Awake()
     {
         if (Instance == null) Instance = this;

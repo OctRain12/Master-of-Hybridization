@@ -13,21 +13,22 @@ public class UI_StatusHUD : MonoBehaviour
     {
         // 订阅时间变化
         EventBus.OnHourChanged += UpdateTimeUI;
-        // 订阅仓库/金币变化
-        InventoryManager.OnInventoryChanged += UpdateGoldUI;
+        // 订阅金币变化
+        WalletManager.OnGoldChanged += UpdateGoldUI;
+        // InventoryManager.OnInventoryChanged += UpdateGoldUI;
         
         // 初始刷新一次（时间管理器可能已就绪）
         if(TimeManager.Instance != null) UpdateTimeUI(TimeManager.Instance.currentDay, TimeManager.Instance.currentHour);
     }
     void Start()
     {
-        // 在 Start 中做初始刷新，保证 InventoryManager.Awake() 已执行，Instance 可用
-        UpdateGoldUI();
+        // 在 Start 中做初始刷新，保证 WalletManager.Awake() 已执行，Instance 可用
+        UpdateGoldUI(WalletManager.Instance.GetGold(), 0);
     }
     void OnDisable()
     {
         EventBus.OnHourChanged -= UpdateTimeUI;
-        InventoryManager.OnInventoryChanged -= UpdateGoldUI;
+        WalletManager.OnGoldChanged -= UpdateGoldUI;
     }
 
     private void UpdateTimeUI(int day, int hour)
@@ -35,9 +36,9 @@ public class UI_StatusHUD : MonoBehaviour
         // 格式化显示，例如: "Day 3 | 08:00"
         timeText.text = $"第 {day} 天 | {hour:D2}:00";
     }
-    private void UpdateGoldUI()
+    private void UpdateGoldUI(int currentGold, int change)
     {
-        if (WalletManager.Instance == null) return;
-        //goldText.text = $"金币: {WalletManager.Instance.currentGold}";
+        Debug.Log($"金币变动: 当前总额 = {currentGold}, 变动差值 = {change}");
+        goldText.text = $"金币: {currentGold}";
     }
 }
