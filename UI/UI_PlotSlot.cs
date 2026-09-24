@@ -185,6 +185,7 @@ public class UI_PlotSlot : MonoBehaviour{
     {
         //若植物没成熟直接返回
         if (currentState != TileState.Mature) return;
+        EncyclopediaManager.Instance.RegisterDiscovery(currentPlantData); // 注册发现与极品检测
         //针对收获果实和种子的不同情况
         if (isSeedMode)
         {

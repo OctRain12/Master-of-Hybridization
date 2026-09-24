@@ -44,4 +44,47 @@ public static class EventBus
     // 当玩家切换工具模式时触发
     public static event Action<ToolMode> OnToolModeChanged;
     public static void TriggerToolModeChanged(ToolMode newMode) => OnToolModeChanged?.Invoke(newMode);
+
+    //-------------图鉴系统事件-------------
+    // 1. 首次收集点亮某种作物的图鉴事件
+    public static event Action<OnSpeciesDiscoveredEvent> OnSpeciesDiscovered;
+    public static void TriggerSpeciesDiscovered(SpeciesData species) => 
+        OnSpeciesDiscovered?.Invoke(new OnSpeciesDiscoveredEvent(species));
+
+    // 2. 首次成功培育出 aabbcc 终极纯合隐性基因事件
+    public static event Action<OnSpeciesPerfectedEvent> OnSpeciesPerfected;
+    public static void TriggerSpeciesPerfected(SpeciesData species) => 
+        OnSpeciesPerfected?.Invoke(new OnSpeciesPerfectedEvent(species));
+
+    // 3. 购买高阶培育线索事件
+    public static event Action<OnCluePurchasedEvent> OnCluePurchased;
+    public static void TriggerCluePurchased(SpeciesData species) => 
+        OnCluePurchased?.Invoke(new OnCluePurchasedEvent(species));
+
+    /// <summary>
+    /// 首次收集点亮某种作物的图鉴事件
+    /// </summary>
+    public struct OnSpeciesDiscoveredEvent
+    {
+        public SpeciesData species;
+        public OnSpeciesDiscoveredEvent(SpeciesData species) { this.species = species; }
+    }
+
+    /// <summary>
+    /// 首次成功培育出 aabbcc 终极纯合隐性基因事件
+    /// </summary>
+    public struct OnSpeciesPerfectedEvent
+    {
+        public SpeciesData species;
+        public OnSpeciesPerfectedEvent(SpeciesData species) { this.species = species; }
+    }
+
+    /// <summary>
+    /// 购买高阶培育线索事件
+    /// </summary>
+    public struct OnCluePurchasedEvent
+    {
+        public SpeciesData species;
+        public OnCluePurchasedEvent(SpeciesData species) { this.species = species; }
+    }
 }

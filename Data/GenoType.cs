@@ -15,6 +15,10 @@ public class GenoType
     // ------1个特殊突变插槽
     public string specialMutation; //留空
 
+    // 判断是否为终极纯合隐性基因 aabbcc
+    public bool IsPerfectRecessive() => speedGene == "aa" && yieldGene == "bb" && resistGene == "cc";
+   
+
     public GenoType(string speed, string yieldG, string resist, string special = "")
     {
         speedGene = speed;

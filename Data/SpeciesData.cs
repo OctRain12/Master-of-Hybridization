@@ -48,4 +48,17 @@ public class SpeciesData : ScriptableObject
 
     [Header("环境/基因突变进化配置")]
     public List<MutationRecipe> possibleMutations; // 该物种可能发生的变异列表
+
+    [Header("图鉴与线索配置")]
+    [TextArea(2, 4)]
+    public string speciesDescription = "作物设定与详细介绍。";
+
+    [TextArea(1, 3)]
+    public string initialHint = "初阶迷题";
+
+    [TextArea(2, 4)]
+    public string advancedClue = "高阶提示";
+
+    [Tooltip("购买该高阶线索所需金币")]
+    public int clueUnlockCost = 200;
 }
