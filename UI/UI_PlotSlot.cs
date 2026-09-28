@@ -16,7 +16,7 @@ public class UI_PlotSlot : MonoBehaviour{
     
     [Header("当前土坑数据")]
     public SeedEntry? calculatedSeedEntry; // 存放杂交/自交后的种子基因等待收获（该种子基因可能会突变成别的植物，所以用SeedEntry）
-    public int defaultCurrentMatchPriority = 99; // 存放自交的种子基因等待收获（该种子基因可能会突变成别的植物，所以用SeedEntry）
+    public int defaultCurrentMatchPriority = 99; 
     public int currentMatchPriority = 99; // 记录当前种子的匹配优先级：0:左, 1:上, 2:右, 3:下, 4:自交(默认)
     public TileState currentState = TileState.Empty;    //初始化土地状态
     public PlantInstanceData currentPlantData;          //当前持有该植物的实例数据（含基因）
@@ -25,6 +25,7 @@ public class UI_PlotSlot : MonoBehaviour{
     private float growthOffset; // 每个人独一无二的生长偏置（小时）
     public float currentGrowthTimer = 0f;    // 当前已生长累计秒数
     public float totalGrowthDuration = 0f;   // 该作物所需的总秒数
+    
     public float speedBuffMultiplier = 1.0f; // 道具/环境额外加速倍率（默认 1.0）
     // 状态防重触发标记
     private bool isFloweringTriggered = false;
@@ -200,6 +201,13 @@ public class UI_PlotSlot : MonoBehaviour{
             int count = currentPlantData.GetActualHarvestQuantity();
             InventoryManager.Instance.AddFruit(currentPlantData.speciesTemplate, count);
         }
+        ResetPlot(); // 收获后清空地块
+    }
+    /// <summary>
+    /// 重置地块
+    /// </summary>
+    public void ResetPlot()
+    {
         //收获完成后需要将地块清空
         currentPlantData = null;
         calculatedSeedEntry = null;
@@ -368,6 +376,30 @@ public class UI_PlotSlot : MonoBehaviour{
             case TileState.Flowering: return template.flowerSprite; // 开花图
             case TileState.Mature: return template.matureSprite;   // 成熟/结果图
             default: return null;
+        }
+    }
+    /// <summary>
+    /// 读档时调用：根据保存的比例无损恢复生长状态
+    /// </summary>
+    public void RestoreFromSave(GameSaveData.SavedPlotEntry entry, SpeciesData speciesTemplate, GenoType dna)
+    {
+        this.currentState = (TileState)entry.tileState;
+
+        if (entry.hasPlant && speciesTemplate != null)
+        {
+            // 1. 重新实例化植物数据
+            this.currentPlantData = new PlantInstanceData(speciesTemplate, dna);
+
+            // 2. 根据生长时间还原计时器
+            this.currentGrowthTimer = entry.currentGrowthTimer;
+
+            // 3. 驱动表现层与进度条刷新
+            UpdateVisuals();
+            // UpdateProgressBar(entry.growthProgress);
+        }
+        else
+        {
+            ResetPlot();
         }
     }
 }

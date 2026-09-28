@@ -94,4 +94,24 @@ public class TimeManager : MonoBehaviour
         float preciseHour = currentHour + (hourTimer / realSecondsPerHour);
         return preciseHour / 24f;
     }
+    /// <summary>
+    /// 加载存档数据时调用
+    /// </summary>
+    /// <param name="day"></param>
+    /// <param name="hour"></param>
+    /// <param name="hourProg"></param>
+    public void LoadSaveData(int day, int hour, float hourProg)
+    {
+        currentDay = day;
+        currentHour = hour;
+        // hourTimer = hourProg * secondsPerHour; // 还原当前小时流逝的秒数
+        
+        // 重新校准白天黑夜阶段
+        currentPhase = (currentHour >= 6 && currentHour < 18) ? DayPhase.Day : DayPhase.Night;
+        
+        // 触发事件同步 UI
+        EventBus.TriggerDayChanged(currentDay);
+        EventBus.TriggerHourChanged(currentDay, currentHour);
+        EventBus.TriggerPhaseChanged(currentPhase);
+    }
 }

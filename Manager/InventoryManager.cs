@@ -216,7 +216,42 @@ public class InventoryManager : MonoBehaviour
         }
         OnInventoryChanged?.Invoke();
     }
+    /// <summary>
+    /// 加载存档数据时调用，恢复种子和果实仓库
+    /// </summary>
+    /// <param name="seeds"></param>
+    /// <param name="fruits"></param>
+    public void LoadSaveData(List<GameSaveData.SavedSeedEntry> seeds, List<GameSaveData.SavedFruitEntry> fruits)
+    {
+        // 清空现有临时数据
+        seedInventory.Clear();
+        fruitInventory.Clear();
+
+        // 还原种子 (包含基因重构)
+        foreach (var entry in seeds)
+        {
+            SpeciesData sp = SaveLoadManager.Instance.GetSpeciesByName(entry.speciesName);
+            if (sp != null)
+            {
+                GenoType dna = GenoType.FromString(entry.geneString); // 假设 GenoType 支持反序列化字符串
+                AddSeed(sp, dna, entry.count);
+            }
+        }
+
+        // 还原果实
+        foreach (var entry in fruits)
+        {
+            SpeciesData sp = SaveLoadManager.Instance.GetSpeciesByName(entry.speciesName);
+            if (sp != null)
+            {
+                fruitInventory[sp] = entry.count;
+            }
+        }
+
+        OnInventoryChanged?.Invoke();
+    }
 }
+
 public struct SeedEntry
     {
         //该结构体应该包含种子的属性：物种，dna

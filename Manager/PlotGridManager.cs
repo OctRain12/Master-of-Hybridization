@@ -174,4 +174,19 @@ public class PlotGridManager : MonoBehaviour
         if (index == 3) return 1; // 下 -> 上
         return 4;
     }
+    public void LoadSaveData(List<GameSaveData.SavedPlotEntry> plotEntries)
+    {
+        foreach (var entry in plotEntries)
+        {
+            Vector2Int pos = new Vector2Int(entry.gridX, entry.gridY);
+            if (plotDictionary.TryGetValue(pos, out UI_PlotSlot slot))
+            {
+                SpeciesData sp = entry.hasPlant ? SaveLoadManager.Instance.GetSpeciesByName(entry.speciesName) : null;
+                GenoType dna = entry.hasPlant ? GenoType.FromString(entry.geneString) : null;
+                
+                // 调用之前编写的 RestoreFromSave 还原状态和生长比例
+                slot.RestoreFromSave(entry, sp, dna);
+            }
+        }
+    }
 }

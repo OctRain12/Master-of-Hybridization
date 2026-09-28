@@ -40,4 +40,13 @@ public class WalletManager : MonoBehaviour
         currentGold += amount;
         OnGoldChanged?.Invoke(currentGold, amount);
     }
+    /// <summary>
+    /// 加载存档数据时调用
+    /// </summary>
+    /// <param name="gold"></param>
+    public void LoadSaveData(int gold)
+    {
+        currentGold = gold;
+        OnGoldChanged?.Invoke(currentGold, 0); // 驱动 UI 刷新当前金币
+    }
 }

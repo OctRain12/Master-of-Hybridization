@@ -27,6 +27,19 @@ public class GenoType
         specialMutation = special;
     }
 
+    // 存档接口
+    public string GetGeneString() => $"{speedGene}{yieldGene}{resistGene}{specialMutation}";
+
+    public static GenoType FromString(string geneString)
+    {
+        if (geneString.Length < 6) throw new ArgumentException("基因字符串长度不足，无法解析。");
+        string speed = geneString.Substring(0, 2);
+        string yieldG = geneString.Substring(2, 2);
+        string resist = geneString.Substring(4, 2);
+        string special = geneString.Length > 6 ? geneString.Substring(6) : "";  // 如果有突变基因，则截取剩余部分，否则为空字符串
+        return new GenoType(speed, yieldG, resist, special);
+    }
+
     // ==========================================
     // 核心逻辑 1：数值换算 (将字母变成实际的游戏加成系数)
     // ==========================================
