@@ -27,13 +27,15 @@ public class GameSceneBootstrapper : MonoBehaviour
         TimeManager.Instance?.LoadSaveData(data.currentDay, data.currentHour, data.hourProgress);
 
         // 3. 还原图鉴
-        // EncyclopediaManager.Instance?.LoadSaveData(data.unlockedSpeciesNames, data.perfectedSpeciesNames, data.clueUnlockedSpeciesNames);
+        EncyclopediaManager.Instance?.LoadSaveData(data.unlockedSpeciesNames, data.perfectedSpeciesNames, data.clueUnlockedSpeciesNames);
 
         // 4. 还原背包（种子与果实）
         InventoryManager.Instance?.LoadSaveData(data.seedInventory, data.fruitInventory);
 
         // 5. 还原地块状态与生长比例
         PlotGridManager.Instance?.LoadSaveData(data.plotEntries);
+
+
 
         Debug.Log($"[存档系统] 读档成功，时间戳: {data.saveTimestamp}");
     }

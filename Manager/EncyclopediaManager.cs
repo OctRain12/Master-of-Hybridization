@@ -41,6 +41,33 @@ public class EncyclopediaManager : MonoBehaviour
     public bool IsPerfected(SpeciesData species) => perfectedSpeciesIDs.Contains(species.speciesName);
     public bool IsClueUnlocked(SpeciesData species) => clueUnlockedSpeciesIDs.Contains(species.speciesName);
 
+    // 导出：给存档系统读
+    public List<string> GetUnlockedSpeciesIDs() => new List<string>(unlockedSpeciesIDs);
+    public List<string> GetPerfectedSpeciesIDs() => new List<string>(perfectedSpeciesIDs);
+    public List<string> GetClueUnlockedSpeciesIDs() => new List<string>(clueUnlockedSpeciesIDs);
+
+    /// <summary>
+    /// 导入：从存档系统写入
+    /// </summary>
+    public void LoadSaveData(
+    List<string> unlocked,
+    List<string> perfected,
+    List<string> clueUnlocked)
+    {
+        unlockedSpeciesIDs.Clear();
+        perfectedSpeciesIDs.Clear();
+        clueUnlockedSpeciesIDs.Clear();
+
+        if (unlocked != null)
+            foreach (var id in unlocked) unlockedSpeciesIDs.Add(id);
+
+        if (perfected != null)
+            foreach (var id in perfected) perfectedSpeciesIDs.Add(id);
+
+        if (clueUnlocked != null)
+            foreach (var id in clueUnlocked) clueUnlockedSpeciesIDs.Add(id);
+    }
+
     /// <summary>
     /// 尝试花费金币解锁高阶线索
     /// </summary>

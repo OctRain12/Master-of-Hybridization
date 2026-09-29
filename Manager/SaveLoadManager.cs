@@ -151,7 +151,21 @@ public class SaveLoadManager : MonoBehaviour
             }
         }
         // 5. 采集图鉴状态
-        // TODO: 图鉴数据
+        if(EncyclopediaManager.Instance != null)
+        {
+            foreach (var speciesName in EncyclopediaManager.Instance.GetUnlockedSpeciesIDs())
+            {
+                data.unlockedSpeciesNames.Add(speciesName);
+            }
+            foreach (var speciesName in EncyclopediaManager.Instance.GetPerfectedSpeciesIDs())
+            {
+                data.perfectedSpeciesNames.Add(speciesName);
+            }
+            foreach (var speciesName in EncyclopediaManager.Instance.GetClueUnlockedSpeciesIDs())
+            {
+                data.clueUnlockedSpeciesNames.Add(speciesName);
+            }
+        }
         // 写入本地文件
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(saveFilePath, json);

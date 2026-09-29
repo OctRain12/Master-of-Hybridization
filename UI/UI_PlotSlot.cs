@@ -9,7 +9,8 @@ public class UI_PlotSlot : MonoBehaviour{
     [Header("视觉组件")]
     public Image shadowImage;    // 根部阴影
     public Image plantImage;     // 植物/小芽图片
-    public Slider progressBar; // 预留：头顶或地块内部绑定的进度条 UI
+    // public Slider progressBar; // 预留：头顶或地块内部绑定的进度条 UI
+    public UI_PlotProgressBar progressBar; // 地块内部绑定的进度条 UI
 
     [Header("网格坐标 (用于数据层匹配)")]
     public Vector2Int gridPos;
@@ -27,6 +28,17 @@ public class UI_PlotSlot : MonoBehaviour{
     public float totalGrowthDuration = 0f;   // 该作物所需的总秒数
     
     public float speedBuffMultiplier = 1.0f; // 道具/环境额外加速倍率（默认 1.0）
+
+    [Header("收割表现参数")]
+    [SerializeField] private RectTransform plantVisualRect; // 挂载植物图片的 RectTransform
+    [SerializeField] private CanvasGroup plantCanvasGroup;  // 控制植物图片透明度
+    [SerializeField] private float squishDuration = 0.08f;  // 下蹲蓄力时长
+    [SerializeField] private float shrinkDuration = 0.2f;   // 向下收缩消失时长
+    [SerializeField] private AudioClip harvestFruitSound;   // 果实收割音效
+    [SerializeField] private AudioClip harvestSeedSound;    // 种子提取音效
+
+    private Coroutine harvestRoutine;
+    private bool isHarvesting = false; // 防抖锁：是否正在播放收割动画
     // 状态防重触发标记
     private bool isFloweringTriggered = false;
     // public SpeciesData currentSpecies;
@@ -76,6 +88,8 @@ public class UI_PlotSlot : MonoBehaviour{
         speedBuffMultiplier = 1.0f;
         isFloweringTriggered = false;
         currentState = TileState.Growing;
+        float flowerStageRatio = currentPlantData.speciesTemplate.flowerStageRatio;
+        progressBar.Init(flowerStageRatio);
         UpdateVisuals(); // 刷新贴图
         PlayPlantSeedAnimation();
         Debug.Log($"播种成功：{currentPlantData.speciesTemplate.speciesName}，基因：{currentPlantData.dna}");
@@ -94,8 +108,7 @@ public class UI_PlotSlot : MonoBehaviour{
         // 1. 实时更新 UI 进度条（如果有绑定）
         if (progressBar != null)
         {
-            progressBar.gameObject.SetActive(true);
-            progressBar.value = progress;
+            progressBar.UpdateProgress(progress);
         }
 
         // 2. 进度达到开花标准：进入开花期并触发突变/授粉
@@ -185,7 +198,8 @@ public class UI_PlotSlot : MonoBehaviour{
     public void Harvest(bool isSeedMode)
     {
         //若植物没成熟直接返回
-        if (currentState != TileState.Mature) return;
+        if (currentState != TileState.Mature || isHarvesting) return;
+        isHarvesting = true;
         EncyclopediaManager.Instance.RegisterDiscovery(currentPlantData); // 注册发现与极品检测
         //针对收获果实和种子的不同情况
         if (isSeedMode)
@@ -201,8 +215,63 @@ public class UI_PlotSlot : MonoBehaviour{
             int count = currentPlantData.GetActualHarvestQuantity();
             InventoryManager.Instance.AddFruit(currentPlantData.speciesTemplate, count);
         }
-        ResetPlot(); // 收获后清空地块
+            // 1. 触发音效
+        AudioClip soundToPlay = isSeedMode ? harvestSeedSound : harvestFruitSound;
+        // SoundManager.Instance?.PlaySFX(soundToPlay); // 预留对接你的音频管理器
+
+        // 2. 触发飘字反馈
+        int yieldAmount = isSeedMode ? currentPlantData.speciesTemplate.seedCount : currentPlantData.GetActualHarvestQuantity();
+        Sprite icon = isSeedMode ? currentPlantData.speciesTemplate.speciesSeedIcon : currentPlantData.speciesTemplate.speciesFruitIcon;
+        
+        // 将当前地块的世界坐标传给对象池（Canvas 模式下可用）
+        FloaterPoolManager.Instance.Spawn(icon, yieldAmount, transform.position);
+
+        // 3. 开启收缩协程
+        if (harvestRoutine != null) StopCoroutine(harvestRoutine);
+        harvestRoutine = StartCoroutine(HarvestAnimationRoutine());
+        // ResetPlot(); // 收获后清空地块
     }
+    /// <summary>
+    /// 收获动画协程：先向两边挤压 -> 再向下收缩消失 -> 最终清空地块
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator HarvestAnimationRoutine()
+    {
+        // 隐藏进度条
+        // progressBar.Hide();
+        
+        float elapsed = 0f;
+        
+        // 阶段 1：向两边挤压 (Squish)
+        Vector3 originalScale = Vector3.one;
+        Vector3 squishScale = new Vector3(1.15f, 0.85f, 1f);
+        
+        while (elapsed < squishDuration)
+        {
+            elapsed += Time.deltaTime;
+            plantVisualRect.localScale = Vector3.Lerp(originalScale, squishScale, elapsed / squishDuration);
+            yield return null;
+        }
+
+        // 阶段 2：向下收缩并消失 (Shrink & Fade)
+        elapsed = 0f;
+        while (elapsed < shrinkDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / shrinkDuration;
+            
+            // 尺寸收缩到 0
+            plantVisualRect.localScale = Vector3.Lerp(squishScale, new Vector3(0f, 0f, 1f), t);
+            // Alpha 渐隐
+            if (plantCanvasGroup != null) plantCanvasGroup.alpha = Mathf.Lerp(1f, 0f, t);
+            
+            yield return null;
+        }
+
+        // 4. 彻底清理数据，重置地块为 Empty 状态
+        ResetPlot();
+    }
+
     /// <summary>
     /// 重置地块
     /// </summary>
@@ -214,8 +283,11 @@ public class UI_PlotSlot : MonoBehaviour{
         currentState = TileState.Empty;
         currentGrowthTimer = 0f;
         totalGrowthDuration = 0f;
-        // 为进度条预留
-        if (progressBar != null) progressBar.gameObject.SetActive(false);
+        // if (progressBar != null) progressBar.Hide();
+        // 恢复视觉初始状态，以便下次播种
+        plantVisualRect.localScale = Vector3.one;
+        if (plantCanvasGroup != null) plantCanvasGroup.alpha = 1f;
+        isHarvesting = false;
         UpdateVisuals();
     }
     /// <summary>
@@ -228,6 +300,7 @@ public class UI_PlotSlot : MonoBehaviour{
         {
             shadowImage.gameObject.SetActive(false);
             plantImage.gameObject.SetActive(false);
+            if (progressBar != null) progressBar.Hide();
             return;
         }
 
@@ -395,7 +468,11 @@ public class UI_PlotSlot : MonoBehaviour{
 
             // 3. 驱动表现层与进度条刷新
             UpdateVisuals();
-            // UpdateProgressBar(entry.growthProgress);
+            if (progressBar != null)
+            {
+                float progress = Mathf.Clamp01(currentGrowthTimer / totalGrowthDuration);
+                progressBar.UpdateProgress(progress);
+            }
         }
         else
         {

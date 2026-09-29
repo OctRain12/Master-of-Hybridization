@@ -53,4 +53,11 @@ public class GameSaveData
         public int count;
     }
     // TODO: 图鉴数据
+    public struct SavedSpeciesEntry
+    {
+        public string speciesName;
+        public bool isDiscovered;
+        public bool isPerfected;
+        public bool isClueUnlocked;
+    }
 }
