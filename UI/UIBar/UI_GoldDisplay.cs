@@ -17,10 +17,16 @@ public class UI_GoldDisplay : MonoBehaviour
     [Header("颜色")]
     public Color normalColor = Color.white;   // 正常颜色
     public Color warningColor = Color.red;    // 警告颜色
+    [Header("滚动颜色")]
+    public Color increaseColor = Color.green;
+    public Color decreaseColor = Color.red;
 
     private RectTransform rectTransform;      // 自己的 RectTransform，用于晃动
     private Vector2 originalPosition;         // 记录初始位置，晃动完要还原
     private Coroutine warningRoutine;         // 当前正在跑的警告协程引用
+
+    private Coroutine rollRoutine;            // 当前正在跑的滚动协程引用
+    private int displayedGold;                  // 当前金币数，用于滚动动画
 
     private void Awake()
     {
@@ -30,29 +36,27 @@ public class UI_GoldDisplay : MonoBehaviour
         // 记录初始 anchoredPosition，晃动结束后要回到这里
         originalPosition = rectTransform.anchoredPosition;
     }
-        private void OnEnable()
+    private void OnEnable()
     {
         // 面板启用时订阅钱包事件
+        // 金币变化 → 刷新文本
+        WalletManager.OnGoldChanged += UpdateGoldText;
+        // 金币不足 → 播放警告动画
+        WalletManager.OnInsufficientFunds += TriggerWarning;
+        // 先同步一次当前金币，避免显示旧数据
         if (WalletManager.Instance != null)
         {
-            // 先同步一次当前金币，避免显示旧数据
             goldText.text = WalletManager.Instance.GetGold().ToString();
-
-            // 金币变化 → 刷新文本
-            WalletManager.OnGoldChanged += UpdateGoldText;
-
-            // 金币不足 → 播放警告动画
-            WalletManager.OnInsufficientFunds += TriggerWarning;
+            displayedGold = WalletManager.Instance.GetGold();
         }
+
+
     }
         private void OnDisable()
     {
         // 面板禁用时取消订阅
-        if (WalletManager.Instance != null)
-        {
             WalletManager.OnGoldChanged -= UpdateGoldText;
             WalletManager.OnInsufficientFunds -= TriggerWarning;
-        }
     }
     /// <summary>
     /// 金币变化时刷新文本。
@@ -61,7 +65,12 @@ public class UI_GoldDisplay : MonoBehaviour
     /// <param name="delta">本次变化量（正数为增加，负数为减少）</param>
     private void UpdateGoldText(int currentGold, int delta)
     {
-        goldText.text = currentGold.ToString();
+        
+        // 防止重复触发导致多个协程同时跑
+        if (rollRoutine != null) StopCoroutine(rollRoutine);
+
+        rollRoutine = StartCoroutine(RollToGold(currentGold,delta));
+        // goldText.text = currentGold.ToString();
         // 此处可扩展：数字平滑滚动动画 (Number Lerp)
     }
     /// <summary>
@@ -70,6 +79,7 @@ public class UI_GoldDisplay : MonoBehaviour
     /// </summary>
     private void TriggerWarning()
     {
+
         // 防止重复触发导致多个协程同时跑
         if (warningRoutine != null) StopCoroutine(warningRoutine);
 
@@ -106,5 +116,33 @@ public class UI_GoldDisplay : MonoBehaviour
         // 动画结束，还原位置和颜色
         rectTransform.anchoredPosition = originalPosition;
         goldText.color = normalColor;
+    }
+    private IEnumerator RollToGold(int targetGold,int delta)
+    {
+        int startGold = displayedGold;
+
+        // 设置颜色
+        Color rollColor = delta > 0 ? increaseColor : decreaseColor;
+        goldText.color = rollColor;
+
+        float duration = 0.3f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            t = 1f - (1f - t) * (1f - t);
+            displayedGold = Mathf.RoundToInt(Mathf.Lerp(startGold, targetGold, t));
+            goldText.text = displayedGold.ToString();
+            yield return null;
+        }
+
+        displayedGold = targetGold;
+        goldText.text = targetGold.ToString();
+
+        // 恢复原色
+        goldText.color = normalColor;
+        rollRoutine = null;
     }
 }

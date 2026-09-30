@@ -34,7 +34,7 @@ public class UI_StatusHUD : MonoBehaviour
     private void UpdateTimeUI(int day, int hour)
     {
         // 格式化显示，例如: "Day 3 | 08:00"
-        timeText.text = $"第 {day} 天 | {hour:D2}:00";
+        timeText.text = $"Day {day}| {hour:D2}:00";
     }
     private void UpdateGoldUI(int currentGold, int change)
     {

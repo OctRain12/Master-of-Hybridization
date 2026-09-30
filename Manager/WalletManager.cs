@@ -29,6 +29,7 @@ public class WalletManager : MonoBehaviour
         }
         else
         {
+            Debug.Log("余额不足");
             // 触发余额不足的全域警告
             OnInsufficientFunds?.Invoke();
             return false;
