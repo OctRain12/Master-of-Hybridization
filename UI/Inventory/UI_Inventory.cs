@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using System.Linq;
 using System.Dynamic;
 using Unity.VisualScripting;
@@ -10,6 +12,24 @@ public class UI_Inventory : MonoBehaviour
     public static UI_Inventory Instance; // 单例模式，方便其他脚本调用背包UI
     public Transform contentTransform;  //  存放仓库格子的父节点
     public Transform hotbarTransform;  // 存放快捷栏格子的父节点
+
+    [Header("Tab 按钮")]
+    public Button seedTabButton;
+    public Button fruitTabButton;
+
+    [Header("Tab 视觉")]
+    public Image seedTabBg;
+    public Image fruitTabBg;
+    public TextMeshProUGUI seedTabText;
+    public TextMeshProUGUI fruitTabText;
+
+    [Header("Tab 背景图")]
+    public Sprite activeTabSprite;
+    public Sprite inactiveTabSprite;
+
+    [Header("Tab 文字颜色")]
+    public Color activeTextColor = Color.white;
+    public Color inactiveTextColor = new Color(0.6f, 0.6f, 0.6f);
     public bool IsOpen => gameObject.activeSelf;    // 当前背包UI是否打开
 
     [Header("当前激活分类")]
@@ -29,16 +49,13 @@ public class UI_Inventory : MonoBehaviour
 
     void OnEnable()
     {
-        InventoryManager.OnInventoryChanged += RedRawUI;
-        RedRawUI();
+        InventoryManager.OnInventoryChanged += ReDrawUI;
+        UpdateTabVisual(); 
+        ReDrawUI();
     }
     void OnDisable()
     {
-        InventoryManager.OnInventoryChanged -= RedRawUI;
-    }
-    void Start()
-    {
-
+        InventoryManager.OnInventoryChanged -= ReDrawUI;
     }
     /// <summary>
     /// 提供给 UI 按钮调用的方法：切换背包标签页
@@ -47,9 +64,30 @@ public class UI_Inventory : MonoBehaviour
     {
         currentCategory = (ItemCategory)categoryIndex;
         CursorManager.Instance.ResetCursorState(); // 切换分类前先把鼠标上的物品放回背包，避免切换后物品不见了
-        RedRawUI(); // 切换分类后，立刻重新绘制格子内容
+        UpdateTabVisual(); // 切换分类后，更新标签的视觉效果
+        ReDrawUI(); // 切换分类后，立刻重新绘制格子内容
     }
-    public void RedRawUI()
+    /// <summary>
+    /// 更新标签
+    /// </summary>
+    private void UpdateTabVisual()
+    {
+        bool isSeed = currentCategory == ItemCategory.Seed;
+
+        ApplyTabVisual(seedTabBg, seedTabText, isSeed);
+        ApplyTabVisual(fruitTabBg, fruitTabText, !isSeed);
+        // 让选中的按钮渲染在最上面
+        if (isSeed)
+            seedTabButton.transform.SetAsLastSibling();
+        else
+            fruitTabButton.transform.SetAsLastSibling();
+    }
+    private void ApplyTabVisual(Image bg, TextMeshProUGUI text, bool isActive)
+    {
+        bg.sprite = isActive ? activeTabSprite : inactiveTabSprite;
+        text.color = isActive ? activeTextColor : inactiveTextColor;
+    }
+    public void ReDrawUI()
     {
         if(currentCategory == ItemCategory.Seed)
         {
