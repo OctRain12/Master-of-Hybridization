@@ -28,6 +28,7 @@ public class UI_MainMenu : MonoBehaviour
         newGameButton.onClick.AddListener(OnNewGameClicked);
         settingsButton.onClick.AddListener(OnSettingsClicked);
         quitButton.onClick.AddListener(OnQuitClicked);
+        SoundManager.Instance?.PlayBGM(BGMType.MainMenu);
 
         if (settingsPanel != null) settingsPanel.SetActive(false);
     }

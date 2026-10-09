@@ -34,6 +34,7 @@ public class TimeManager : MonoBehaviour
     {
         // 游戏启动时，初始化一次日夜状态
         currentPhase = (currentHour >= nightStartHour || currentHour < dayStartHour) ? DayPhase.Night : DayPhase.Day;
+        ApplyBGM();
     }
     void Update()
     {
@@ -113,5 +114,11 @@ public class TimeManager : MonoBehaviour
         EventBus.TriggerDayChanged(currentDay);
         EventBus.TriggerHourChanged(currentDay, currentHour);
         EventBus.TriggerPhaseChanged(currentPhase);
+    }
+    // BGM切换
+    private void ApplyBGM()
+    {
+        BGMType bgm = IsDay ? BGMType.Day : BGMType.Night;
+        SoundManager.Instance.PlayBGM(bgm);
     }
 }

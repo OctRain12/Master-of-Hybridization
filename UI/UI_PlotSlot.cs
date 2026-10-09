@@ -92,6 +92,7 @@ public class UI_PlotSlot : MonoBehaviour{
         progressBar.Init(flowerStageRatio);
         UpdateVisuals(); // 刷新贴图
         PlayPlantSeedAnimation();
+        SoundManager.Instance.PlaySFX(SFXType.PlantSeed);
         Debug.Log($"播种成功：{currentPlantData.speciesTemplate.speciesName}，基因：{currentPlantData.dna}");
     }
     /// <summary>
@@ -131,6 +132,7 @@ public class UI_PlotSlot : MonoBehaviour{
         {
             currentState = TileState.Mature;
             isFloweringTriggered = false;
+            SoundManager.Instance.PlaySFX(SFXType.Matured);
             TransitionTo(currentState);
         }
     
@@ -215,16 +217,23 @@ public class UI_PlotSlot : MonoBehaviour{
             int count = currentPlantData.GetActualHarvestQuantity();
             InventoryManager.Instance.AddFruit(currentPlantData.speciesTemplate, count);
         }
-            // 1. 触发音效
-        AudioClip soundToPlay = isSeedMode ? harvestSeedSound : harvestFruitSound;
-        // SoundManager.Instance?.PlaySFX(soundToPlay); // 预留对接你的音频管理器
+        // 1. 触发音效
+        // AudioClip soundToPlay = isSeedMode ? harvestSeedSound : harvestFruitSound;
+        SoundManager.Instance.PlaySFX(isSeedMode ? SFXType.HarvestSeed : SFXType.HarvestFruit);
 
         // 2. 触发飘字反馈
         int yieldAmount = isSeedMode ? currentPlantData.speciesTemplate.seedCount : currentPlantData.GetActualHarvestQuantity();
         Sprite icon = isSeedMode ? currentPlantData.speciesTemplate.speciesSeedIcon : currentPlantData.speciesTemplate.speciesFruitIcon;
-        
+    
+        // 将当前地块 UI 元素的位置当锚点
+        // Vector2 anchoredPos = ((RectTransform)transform).anchoredPosition;
+        // Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(
+        //                     Camera.main, 
+        //                     transform.position
+        //                     );
         // 将当前地块的世界坐标传给对象池（Canvas 模式下可用）
         FloaterPoolManager.Instance.Spawn(icon, yieldAmount, transform.position);
+        // FloaterPoolManager.Instance.Spawn(icon, yieldAmount, screenPos);
 
         // 3. 开启收缩协程
         if (harvestRoutine != null) StopCoroutine(harvestRoutine);
