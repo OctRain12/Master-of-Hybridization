@@ -11,8 +11,6 @@ public enum ItemCategory
 
 public class InventoryManager : MonoBehaviour
 {
-    //[Header("经济系统")]
-    //public int currentGold = 100; // 初始金币
     [Header("快捷栏数据 (固定6个槽位)")]
     public int hotbarSize = 6;
     public List<HotbarSlotData> hotbarSlots = new List<HotbarSlotData>();
@@ -23,7 +21,7 @@ public class InventoryManager : MonoBehaviour
     //1.果实仓库，每次收割传入作物id与数量count
     public Dictionary<SpeciesData, int> fruitInventory = new Dictionary<SpeciesData, int>();
     //2.种子仓库，每次收割传入种子id与基因对比和数量count，基因对比一致才叠加到一起
-    //为了方便判断是否基因一致，引入新结构体SeedEntry
+    //为了方便判断是否基因一致，采用结构体SeedEntry
     public Dictionary<SeedEntry, int> seedInventory = new Dictionary<SeedEntry, int>();
 
     //3.元数据仓库 (保存玩家的标记)
@@ -39,13 +37,11 @@ public class InventoryManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
-        Debug.Log("[仓库] InventoryManager 已初始化。");
     }
 
     void Start()
     {
         InitializeHotbar();
-        Debug.Log("[仓库] 快捷栏已初始化，槽位数量：" + hotbarSize);
     }
 
     //---收获果实---
@@ -124,18 +120,6 @@ public class InventoryManager : MonoBehaviour
         }
         return "";
     }
-    // 购买种子或卖出果实时调用
-    /*public bool ModifyGold(int amount)
-    {
-        if(currentGold + amount < 0)
-        {
-            Debug.LogWarning("[仓库] 金币不足，无法完成交易。");
-            return false; // 金币不足，交易失败
-        }
-        currentGold += amount;
-        OnInventoryChanged?.Invoke(); // 金币变了也属于背包/仓库数据变动，触发UI刷新
-        return true; // 交易成功
-    }*/
     /// <summary>
     /// 检查并扣除指定数量的果实（用于完成订单）
     /// </summary>

@@ -20,6 +20,14 @@ public class UI_AutoAudioBinder : MonoBehaviour
             {
                 btn.onClick.AddListener(() => SoundManager.Instance?.PlaySFX(SFXType.OpenBook));
             }
+            else if (btnName.Contains("bin"))
+            {
+                btn.onClick.AddListener(() => SoundManager.Instance?.PlaySFX(SFXType.Matured));
+            }
+            else
+            {
+                btn.onClick.AddListener(() => SoundManager.Instance?.PlaySFX(SFXType.UIClick));
+            }
         }
     }
 }

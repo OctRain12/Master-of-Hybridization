@@ -160,29 +160,26 @@ public class UI_Inventory : MonoBehaviour
         }
 
     }
-    /*public void RedrawUI()
+    /// <summary>
+    /// 销毁作物
+    /// </summary>
+    public void DestroyCrop()
     {
-        if (InventoryManager.Instance == null) return;
-        //将种子字典转换为列表方便索引
-        var seedList = InventoryManager.Instance.seedInventory.ToList();
+        CursorItemType cursorItemType = CursorManager.Instance.cursorItemType;
+        if (cursorItemType == CursorItemType.None) return;
         
-        //把所有有效数据种子装入格子中，比如20个格子，3种种子，则只计算三个格子，后续格子清空
-        for(int i = 0; i < allSlots.Length; i++)
+        if (cursorItemType == CursorItemType.Seed)
         {
-            if(i < seedList.Count)
-            {
-                //把有效数据提取出来
-                var pair = seedList[i];
-                //确认下玩家所打的标签
-                InventoryManager.Instance.seedTags.TryGetValue(pair.Key,out string tag);
-                //更新格子的信息
-                allSlots[i].Refresh(pair.Key,pair.Value, tag);
-            }
-            else
-            {
-                //空闲格子，并没有这么多实际数据，清空
-                allSlots[i].ClearSlot();
-            }
+            SeedEntry species = CursorManager.Instance.heldSeed;
+            // 移除当前种子
+            InventoryManager.Instance.seedInventory.Remove(species);
         }
-    }*/
+        else if (cursorItemType == CursorItemType.Fruit)
+        {
+            SpeciesData species = CursorManager.Instance.heldFruit;
+            // 移除果实仓库中对应作物的果实条目
+            InventoryManager.Instance.fruitInventory.Remove(species);
+        }
+        CursorManager.Instance.DropItem();
+    }
 }

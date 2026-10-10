@@ -58,6 +58,8 @@ public class SoundManager : MonoBehaviour
         EventBus.OnPlantFlowering += HandlePlantFlowering;
         // EventBus.OnCluePurchased += HandleCluePurchased;
         EventBus.OnSpeciesPerfected += HandleSpeciesPerfected;
+        WalletManager.OnGoldChanged += HandleGoldChanged;
+        WalletManager.OnInsufficientFunds += HandleInsufficientFunds;
     }
     private void OnDisable()
     {
@@ -67,6 +69,8 @@ public class SoundManager : MonoBehaviour
         EventBus.OnPlantFlowering -= HandlePlantFlowering;
         // EventBus.OnCluePurchased -= HandleCluePurchased;
         EventBus.OnSpeciesPerfected -= HandleSpeciesPerfected;
+        WalletManager.OnGoldChanged -= HandleGoldChanged;
+        WalletManager.OnInsufficientFunds -= HandleInsufficientFunds;
     }
     /// <summary>
     /// 初始化音频字典，便于快速查找音频剪辑
@@ -231,8 +235,16 @@ if (!sfxDict.TryGetValue(type, out List<AudioClip> clips) || clips.Count == 0) r
     {
         PlaySFX(SFXType.Flowering);
     }
-    private void HandleSpeciesPerfected(EventBus.OnSpeciesPerfectedEvent evt)
+    private void HandleSpeciesPerfected(OnSpeciesPerfectedEvent evt)
     {
         PlaySFX(SFXType.PerfectAchieved);
+    }
+    private void HandleGoldChanged(int currentGold, int delta)
+    {
+        PlaySFX(SFXType.CoinGain);
+    }
+    private void HandleInsufficientFunds()
+    {
+        PlaySFX(SFXType.SpendFail);
     }
 }

@@ -36,7 +36,6 @@ public class GameSaveData
         public string geneString;      // 基因，如 "AaBbCc"
         public string calculatedSeedEntry;
         public float currentGrowthTimer;
-        // public float totalGrowthDuration;
         public float speedBuffMultiplier;
     }
     [Serializable]

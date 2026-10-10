@@ -11,8 +11,8 @@ public enum DayPhase
 public enum ToolMode
 {
     None,            // 普通指针/播种模式
-    FruitBasket,     // 果篮（仅收获果实，保留根茎或进入特定空置状态）
-    SeedExtractor    // 种子提取器（牺牲果实，提取出包含遗传基因的全新种子）
+    FruitBasket,     // 果篮（仅收获果实）
+    SeedExtractor    // 种子提取器（仅收获种子）
 }
 public static class EventBus
 {
@@ -29,12 +29,6 @@ public static class EventBus
     // 昼夜交替时触发，传递参数：(进入了白天还是黑夜)
     public static event Action<DayPhase> OnPhaseChanged;
     public static void TriggerPhaseChanged(DayPhase phase) => OnPhaseChanged?.Invoke(phase);
-    //-------------开花授粉事件----------------
-    //传递 LandTile 脚本本身，方便 GridManager 获取其坐标和数据
-    /*public static event Action<LandTile> OnPlantFlowering;
-    public static void TriggerPlantFlowering(LandTile tile) => OnPlantFlowering?.Invoke(tile);
-    */
-    // 切换为UI_PlotSlot 传递，方便杂交计算器获取其坐标和数据
     public static event Action<UI_PlotSlot> OnPlantFlowering;
     public static void TriggerPlantFlowering(UI_PlotSlot slot) => OnPlantFlowering?.Invoke(slot);
     // UI 土坑相关事件
@@ -61,30 +55,5 @@ public static class EventBus
     public static void TriggerCluePurchased(SpeciesData species) => 
         OnCluePurchased?.Invoke(new OnCluePurchasedEvent(species));
 
-    /// <summary>
-    /// 首次收集点亮某种作物的图鉴事件
-    /// </summary>
-    public struct OnSpeciesDiscoveredEvent
-    {
-        public SpeciesData species;
-        public OnSpeciesDiscoveredEvent(SpeciesData species) { this.species = species; }
-    }
 
-    /// <summary>
-    /// 首次成功培育出 aabbcc 终极纯合隐性基因事件
-    /// </summary>
-    public struct OnSpeciesPerfectedEvent
-    {
-        public SpeciesData species;
-        public OnSpeciesPerfectedEvent(SpeciesData species) { this.species = species; }
-    }
-
-    /// <summary>
-    /// 购买高阶培育线索事件
-    /// </summary>
-    public struct OnCluePurchasedEvent
-    {
-        public SpeciesData species;
-        public OnCluePurchasedEvent(SpeciesData species) { this.species = species; }
-    }
 }

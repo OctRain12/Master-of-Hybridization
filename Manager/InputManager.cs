@@ -6,7 +6,7 @@ using TMPro;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
-public class TestInputManager : MonoBehaviour
+public class InputManager : MonoBehaviour
 {
     private bool isOnUI; //当前鼠标指针是否正悬停在任何 UI 元素上
     //面板选择对应物种
@@ -33,16 +33,11 @@ public class TestInputManager : MonoBehaviour
         OpenInventoryUI();
         isOnUI = EventSystem.current.IsPointerOverGameObject();
         OnMouseOver();
-        /*if(!isOnUI)
-        {
-            // InputManager(); //当不在UI上才能射线检测操作
-            
-        }*/
-        InputManager(); // 采用UI检测
+        MainInputManager(); // 采用UI检测
 
     }
     //输入操作方法
-    private void InputManager()
+    private void MainInputManager()
     {
         //获取鼠标下的地块
         UI_PlotSlot hoveredTile = GetPlotUnderMouse();
@@ -50,7 +45,6 @@ public class TestInputManager : MonoBehaviour
         //种植模式(鼠标左键)
         if(Input.GetMouseButtonDown(0))
         {
-            // OnMouseDownPlant(hoveredTile); //调用地块的鼠标点击方法
             HandleMouseClick();
         }
         //按键1：种植A,需要判断是否为空土地
@@ -94,7 +88,7 @@ public class TestInputManager : MonoBehaviour
             // 如果当前选中的 UI 是一个输入框 (TMP_InputField 或原生的 InputField)
             if (EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>() != null)
             {
-                return; // 直接终止！不要检测任何快捷键，让玩家安心打字
+                return; // 直接终止,不检测任何快捷键
             }
         }
         //开关背包逻辑
@@ -104,17 +98,12 @@ public class TestInputManager : MonoBehaviour
             {   
                 bool nextState = !inventoryUI.activeSelf;   //取反当前的状态（开变关，关变开）
                 //安全回收
-                // 如果接下来的状态是“关闭”，且鼠标正抓着东西，先回收
-                /*if (nextState == false && CursorManager.Instance.cursorItemType != CursorItemType.None)
-                {
-                    CursorManager.Instance.ResetCursorState();
-                }*/
                 inventoryUI.SetActive(!inventoryUI.activeSelf);
                 CursorManager.Instance.ResetCursorState(); //切换背包时，重置鼠标状态，避免物品丢失
             // 退出背包时，HUD 的可交互和射线检测恢复
             if (hudCanvasGroup != null)
                 {
-                    // 如果背包打开了（nextState为true），HUD 的可交互和射线检测变为 false（直接被彻底无视）
+                    // 如果背包打开了（nextState为true），HUD 的可交互和射线检测变为 false
                     // 如果背包关闭了（nextState为false），HUD 恢复可交互（true）
                     hudCanvasGroup.interactable = !nextState;
                     hudCanvasGroup.blocksRaycasts = !nextState;
@@ -123,22 +112,10 @@ public class TestInputManager : MonoBehaviour
         }
     }
 
-    //采用射线检测当前鼠标下的地块
-    /*private LandTile GetTileUnderMouse()
-    {
-        //获取对应世界坐标
-        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        RaycastHit2D hit = Physics2D.Raycast(mousePos,Vector2.zero);
-        //成功获取到collider的时候，返回对应地块
-        if(hit.collider != null)
-        {
-            return hit.collider.GetComponent<LandTile>();
-        }
-        return null;
-    }*/
     // UI鼠标点击检测
     private void HandleMouseClick()
     {
+        if (inventoryUI.activeSelf) return; // 如果背包面板打开，直接返回，不触发任何操作
         // 尝试获取鼠标当前悬停的 UI 土坑
         UI_PlotSlot hoveredPlot = GetPlotUnderMouse();
         if (hoveredPlot != null)
@@ -151,14 +128,8 @@ public class TestInputManager : MonoBehaviour
         {
             // 情况 B：没有点到任何土坑
             // 检查是不是点在了其他 UI 上（比如背包界面、功能按钮）
-            /*if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-            {
-                return; // 点到了背包或按钮，跳过重置，不影响操作
-            }*/
-
             // 点到了既不是土坑，也不是其他 UI 的真正空白区域，触发重置
             CursorManager.Instance.ResetCursorState();
-            Debug.Log("[鼠标点击] 没有点击到任何土坑，执行全局重置。");
         }
     }
 
@@ -201,18 +172,18 @@ public class TestInputManager : MonoBehaviour
         if (CursorManager.Instance.cursorItemType == CursorItemType.None) return;
         if (Input.GetMouseButtonDown(0)) // 当玩家按下左键
         {
-            // 1. 检查是否点在了 UI 上 (如果是点在背包里或者切换工具按钮上，绝对不能触发重置)
+            // 1. 检查是否点在了 UI 上 (如果是点在背包里或者切换工具按钮上，不能触发重置)
             if (EventSystem.current.IsPointerOverGameObject())
             {
                 return; // 点的是 UI，跳过重置判定
             }
 
-            // 2. 发射射线，看看鼠标底下有没有带 Collider 的土地
-            Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            RaycastHit2D hit = Physics2D.Raycast(mouseWorldPos, Vector2.zero);
+            // 2. 检测是否点在了土地上
+            UI_PlotSlot hoveredPlot = GetPlotUnderMouse();
 
-            // 如果鼠标底下什么都没点到，或者点到的物体身上没有 LandTile 组件
-            if (hit.collider == null || hit.collider.GetComponent<LandTile>() == null)
+
+            // 如果鼠标底下什么都没点到
+            if (hoveredPlot == null)
             {
                 // 说明玩家点在了土地外面的世界，执行全局重置
                 CursorManager.Instance.ResetCursorState();
@@ -249,15 +220,13 @@ public class TestInputManager : MonoBehaviour
                 }
                 else
                 {
-                    CursorManager.Instance.RefreshHotbarPlantAmount(updatedData.amount); // 还有剩，更新鼠标数字
+                    CursorManager.Instance.RefreshHotbarPlantAmount(updatedData.amount); // 如果还有剩，更新鼠标数字
                 }
-                Debug.Log($"[快捷栏播种] 成功在 {hoveredTile.gridPos} 种下种子，快捷栏数量同步扣除。");
             }
             else
             {
                 // 土地已经有作物，取消播种模式
                 CursorManager.Instance.ExitHotbarPlantMode();
-                Debug.Log("[播种失败] 该地块已有作物，退出播种模式。");
             }
             return;
         }

@@ -8,7 +8,7 @@ public enum ShopUnlockType
     RequireFruitSold      // 需累计售卖果实
 }
 
-//创建物种建立菜单
+// 创建物种建立菜单
 [CreateAssetMenu(fileName ="NewSpecies", menuName = "BreedingGame/SpeciesData")]
 public class SpeciesData : ScriptableObject
 {

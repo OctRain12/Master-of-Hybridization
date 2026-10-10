@@ -36,9 +36,6 @@ public class UI_MerchantWindow : MonoBehaviour
     public TextMeshProUGUI totalRevenueText; // 底部栏总价文本
     public Button batchSellConfirmBtn;       // 底部栏出售按钮  
 
-    // 商店专属的格子的数组
-    // private UI_SeedShopSlot[] seedSlots;
-    // private UI_FruitShopSlot[] fruitSlots;   // 已切换为自动获取
     // 内部状态控制
     private ItemCategory currentShopTab = ItemCategory.Seed;
     // 当前正在弹窗交易的目标
@@ -245,7 +242,7 @@ public class UI_MerchantWindow : MonoBehaviour
             if (WalletManager.Instance.TrySpend(totalPrice))
             {
                 // 商店购买的种子统一发放基础杂合 DNA
-                GenoType baseDNA = new GenoType("Aa", "Bb", "Cc");
+                GenoType baseDNA = new GenoType("Aa", "Bb", "cc");
                 InventoryManager.Instance.AddSeed(currentSelectedSeed.species, baseDNA, currentQuantity);
                 
                 // purchasePopupPanel.SetActive(false);

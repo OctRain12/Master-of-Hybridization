@@ -6,7 +6,7 @@ public class PlantInstanceData
     public GenoType dna;                // 这株植物独一无二的基因序列
 
 
-    //构造函数，当播种种子时，把模板和dna数据塞进去
+    // 构造函数，当播种种子时，把模板和dna数据塞进去
     public PlantInstanceData(SpeciesData template, GenoType plantdna)
     {
         speciesTemplate = template;
@@ -29,14 +29,6 @@ public class PlantInstanceData
         float calcDuration = speciesTemplate.baseGrowthDuration * dna.GetSpeedModifier();
         return calcDuration;
     }
-    // 计算实际的授粉期时长 (假设授粉期也受速度基因影响)
-    /* public float GetActualFloweringDuration()
-    {
-        float calcDuration = speciesTemplate.flowerStageRatio * dna.GetSpeedModifier();
-        // 保证授粉期最短也得有 1 个 Tick，防止错过
-        return Mathf.Max(0.1f, calcDuration);
-    }*/
-    // 计算成熟后实际产出的果实/作物数量
     public int GetActualHarvestQuantity()
     {
         // 假设物种模板基础产量是 2，极品基因系数是 2.0，最终就会掉落 4 个。

@@ -70,7 +70,6 @@ public class UI_GoldDisplay : MonoBehaviour
         if (rollRoutine != null) StopCoroutine(rollRoutine);
 
         rollRoutine = StartCoroutine(RollToGold(currentGold,delta));
-        // goldText.text = currentGold.ToString();
         // 此处可扩展：数字平滑滚动动画 (Number Lerp)
     }
     /// <summary>
